@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Navigation exposing (Location)
+import Token
 
 
 -- Model
@@ -9,12 +10,14 @@ import Navigation exposing (Location)
 
 type alias Model =
     { location : Location
+    , accessToken : Maybe String
     }
 
 
 init : Location -> ( Model, Cmd Msg )
 init location =
     ( { location = location
+      , accessToken = Token.getAccessTokenFromHash location.hash
       }
     , Cmd.none
     )
