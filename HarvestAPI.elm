@@ -1,7 +1,8 @@
-module HarvestAPI exposing (getAccessTokenFromHash, getDaily)
+module HarvestAPI exposing (getAccessTokenFromHash, getDaily, getTokenFromHash)
 
 import Http exposing (..)
 import Regex exposing (..)
+import Dict
 
 
 -- Timesheets
@@ -23,7 +24,7 @@ getDaily token =
 
 
 
--- Token
+-- Token (Thomas' sersion)
 
 
 getAccessTokenFromHash : String -> Maybe String
@@ -54,3 +55,43 @@ join mx =
 
         Nothing ->
             Nothing
+
+
+
+-- Token (Sekib's version)
+
+
+getTokenFromHash : String -> Maybe String
+getTokenFromHash s =
+    let
+        params =
+            parseUrlParams s
+    in
+        Dict.get "access_token" params
+
+
+
+--|> Maybe.withDefault ""
+
+
+parseUrlParams : String -> Dict.Dict String String
+parseUrlParams s =
+    s
+        |> String.dropLeft 1
+        |> String.split "&"
+        |> List.map parseSingleParam
+        |> Dict.fromList
+
+
+parseSingleParam : String -> ( String, String )
+parseSingleParam p =
+    let
+        s =
+            String.split "=" p
+    in
+        case s of
+            [ key, val ] ->
+                ( key, val )
+
+            _ ->
+                ( "", "" )
