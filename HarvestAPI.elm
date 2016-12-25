@@ -1,14 +1,15 @@
-module HarvestAPI exposing (getAccessTokenFromHash, getDaily, getTokenFromHash)
+module HarvestAPI exposing (getDaily, getTokenFromHash)
 
-import Http exposing (..)
-import Regex exposing (..)
 import Dict
+import HarvestTypes exposing (..)
+import Http exposing (..)
+import Json.Decode exposing (..)
 
 
 -- Timesheets
 
 
-getDaily : String -> Request String
+getDaily : String -> Request Daily
 getDaily token =
     request
         { method = "GET"
@@ -17,48 +18,29 @@ getDaily token =
             ]
         , url = "https://comsysto.harvestapp.com/daily?access_token=" ++ token
         , body = emptyBody
-        , expect = expectString
+        , expect = expectJson decodeDaily
         , timeout = Nothing
         , withCredentials = False
         }
 
 
-
--- Token (Thomas' sersion)
-
-
-getAccessTokenFromHash : String -> Maybe String
-getAccessTokenFromHash hash =
-    hash
-        |> extractAccessToken
-        |> List.head
-        |> Maybe.andThen getSubmatches
-        |> Maybe.andThen List.head
-        |> join
+decodeDaily : Decoder Daily
+decodeDaily =
+    map3 Daily (field "day_entries" (list dayEntry)) (field "for_day" string) (field "projects" (list project))
 
 
-extractAccessToken : String -> List Match
-extractAccessToken hash =
-    find (AtMost 1) (regex "access_token=(.*)&") hash
+dayEntry : Decoder DayEntry
+dayEntry =
+    map3 DayEntry (field "id" int) (field "notes" string) (field "hours" int)
 
 
-getSubmatches : Match -> Maybe (List (Maybe String))
-getSubmatches match =
-    Just (.submatches match)
-
-
-join : Maybe (Maybe a) -> Maybe a
-join mx =
-    case mx of
-        Just x ->
-            x
-
-        Nothing ->
-            Nothing
+project : Decoder Project
+project =
+    map3 Project (field "id" int) (field "name" string) (field "billable" bool)
 
 
 
--- Token (Sekib's version)
+-- Token
 
 
 getTokenFromHash : String -> Maybe String
@@ -68,10 +50,6 @@ getTokenFromHash s =
             parseUrlParams s
     in
         Dict.get "access_token" params
-
-
-
---|> Maybe.withDefault ""
 
 
 parseUrlParams : String -> Dict.Dict String String

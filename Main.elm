@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import HarvestAPI exposing (..)
+import HarvestTypes exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -13,6 +14,7 @@ import Navigation exposing (Location)
 type alias Model =
     { location : Location
     , access_token : Maybe String
+    , res : String
     }
 
 
@@ -29,6 +31,7 @@ init location =
     in
         ( { location = location
           , access_token = Nothing
+          , res = ""
           }
         , initCmd
         )
@@ -40,7 +43,7 @@ init location =
 
 type Msg
     = LocationChange Location
-    | Daily (Result Http.Error String)
+    | Daily (Result Http.Error HarvestTypes.Daily)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -49,8 +52,8 @@ update msg model =
         LocationChange location ->
             ( { model | location = location }, Cmd.none )
 
-        Daily (Ok res) ->
-            ( { model | access_token = Just res }, Cmd.none )
+        Daily (Ok daily) ->
+            ( { model | res = toString daily }, Cmd.none )
 
         Daily (Err _) ->
             ( { model | access_token = Nothing }, Cmd.none )
