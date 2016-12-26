@@ -194,7 +194,8 @@ renderHours hrs =
     case hrs of
         Just hours ->
             div []
-                [ List.map renderHour hours |> ul []
+                [ h2 [] [ text "Hours for the week 2016-12-19 till 2016-12-25 (dates hardcoded)" ]
+                , List.map renderHour hours |> ul []
                 ]
 
         Nothing ->
