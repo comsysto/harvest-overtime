@@ -1,4 +1,4 @@
-module HarvestAPI exposing (getDaily, getTokenFromHash, getDailyForDate)
+module HarvestAPI exposing (getDaily, getTokenFromHash, getDailyForDate, getUserInfo, getDailyHoursForDateRange)
 
 import Dict
 import HarvestTypes exposing (..)
@@ -41,6 +41,42 @@ getDailyForDate token dayOfYear year =
         }
 
 
+getDailyHoursForDateRange : String -> String -> String -> String -> Request DailyHours
+getDailyHoursForDateRange user from to token =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url =
+            "https://comsysto.harvestapp.com/people/"
+                ++ user
+                ++ "/entries?from="
+                ++ from
+                ++ "&to="
+                ++ to
+                ++ "&access_token="
+                ++ token
+        , body = emptyBody
+        , expect = expectJson decodeDailyHours
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+getUserInfo : String -> Request WhoAmI
+getUserInfo token =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url =
+            "https://comsysto.harvestapp.com/account/who_am_i?access_token="
+                ++ token
+        , body = emptyBody
+        , expect = expectJson decodeWhoAmI
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
 decodeDaily : Decoder Daily
 decodeDaily =
     map3 Daily (field "day_entries" (list dayEntry)) (field "for_day" string) (field "projects" (list project))
@@ -54,6 +90,43 @@ dayEntry =
 project : Decoder Project
 project =
     map3 Project (field "id" int) (field "name" string) (field "billable" bool)
+
+
+decodeDailyHours : Decoder DailyHours
+decodeDailyHours =
+    map6 DailyHours
+        (field "id" int)
+        (field "notes" string)
+        (field "spent_at" string)
+        (field "hours" float)
+        (field "is_closed" bool)
+        (field "is_billed" bool)
+
+
+decodeUser : Decoder User
+decodeUser =
+    map6 User
+        (field "id" int)
+        (field "email" string)
+        (field "admin" bool)
+        (field "first_name" string)
+        (field "last_name" string)
+        (field "avatar_url" string)
+
+
+decodeCompany : Decoder Company
+decodeCompany =
+    map3 Company
+        (field "base_uri" string)
+        (field "full_domain" string)
+        (field "name" string)
+
+
+decodeWhoAmI : Decoder WhoAmI
+decodeWhoAmI =
+    map2 WhoAmI
+        (field "user" decodeUser)
+        (field "company" decodeCompany)
 
 
 
