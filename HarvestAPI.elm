@@ -41,7 +41,7 @@ getDailyForDate token dayOfYear year =
         }
 
 
-getDailyHoursForDateRange : String -> String -> String -> String -> Request Hours
+getDailyHoursForDateRange : String -> String -> String -> String -> Request (List DailyHours)
 getDailyHoursForDateRange user from to token =
     request
         { method = "GET"
@@ -92,16 +92,16 @@ project =
     map3 Project (field "id" int) (field "name" string) (field "billable" bool)
 
 
-decodeHours : Decoder Hours
+decodeHours : Decoder (List DailyHours)
 decodeHours =
-    map Hours (field "day_entries" (list decodeDailyHours))
+    list (field "day_entry" decodeDailyHours)
 
 
 decodeDailyHours : Decoder DailyHours
 decodeDailyHours =
     map6 DailyHours
         (field "id" int)
-        (field "notes" string)
+        (maybe (field "notes" string))
         (field "spent_at" string)
         (field "hours" float)
         (field "is_closed" bool)

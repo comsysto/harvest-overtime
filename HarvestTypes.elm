@@ -38,7 +38,7 @@ type alias Hours =
 
 type alias DailyHours =
     { id : Int
-    , notes : String
+    , notes : Maybe String
     , spent_at : String
     , hours : Float
     , is_closed : Bool

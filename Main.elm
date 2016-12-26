@@ -15,7 +15,7 @@ type alias Model =
     { location : Location
     , access_token : Maybe String
     , res : Maybe Daily
-    , hours : Maybe Hours
+    , hours : Maybe (List DailyHours)
     , who_am_i : Maybe WhoAmI
     }
 
@@ -29,27 +29,28 @@ init location =
         initCmd =
             case token of
                 Just aToken ->
-                    -- Http.send Daily (getDailyForDate aToken "50" "2016")
                     Http.send WhoAmI <| getUserInfo aToken
 
                 Nothing ->
                     Cmd.none
 
-        initCmd2 =
-            case token of
-                Just aToken ->
-                    Http.send Daily (getDailyForDate aToken "50" "2016")
+        {-
+           initCmd2 =
+               case token of
+                   Just aToken ->
+                       Http.send Daily (getDailyForDate aToken "50" "2016")
 
-                Nothing ->
-                    Cmd.none
+                   Nothing ->
+                       Cmd.none
 
-        initCmd3 =
-            case token of
-                Just aToken ->
-                    Http.send Hours (getDailyHoursForDateRange "146305" "20161219" "20161225" aToken)
+           initCmd3 =
+               case token of
+                   Just aToken ->
+                       Http.send Hours (getDailyHoursForDateRange "146305" "20161219" "20161225" aToken)
 
-                Nothing ->
-                    Cmd.none
+                   Nothing ->
+                       Cmd.none
+        -}
     in
         ({ location = location
          , access_token = token
@@ -57,7 +58,7 @@ init location =
          , hours = Nothing
          , who_am_i = Nothing
          }
-            ! [ Navigation.modifyUrl "#", initCmd, initCmd2, initCmd3 ]
+            ! [ Navigation.modifyUrl "#", initCmd ]
         )
 
 
@@ -68,7 +69,7 @@ init location =
 type Msg
     = LocationChange Location
     | Daily (Result Http.Error HarvestTypes.Daily)
-    | Hours (Result Http.Error HarvestTypes.Hours)
+    | Hours (Result Http.Error (List HarvestTypes.DailyHours))
     | WhoAmI (Result Http.Error HarvestTypes.WhoAmI)
 
 
@@ -88,13 +89,23 @@ update msg model =
             ( { model | hours = Just hours }, Cmd.none )
 
         Hours (Err _) ->
-            ( { model | access_token = Nothing }, Cmd.none )
+            ( model, Cmd.none )
 
         WhoAmI (Ok who) ->
-            ( { model | who_am_i = Just who }, Cmd.none )
+            loadHours model who
 
         WhoAmI (Err _) ->
             ( { model | access_token = Nothing }, Cmd.none )
+
+
+loadHours : Model -> WhoAmI -> ( Model, Cmd Msg )
+loadHours model who =
+    case model.access_token of
+        Just token ->
+            { model | who_am_i = Just who } ! [ Http.send Hours (getDailyHoursForDateRange (toString who.user.id) "20161219" "20161225" token) ]
+
+        Nothing ->
+            { model | who_am_i = Just who } ! []
 
 
 
@@ -178,12 +189,12 @@ renderUserInfo info =
             div [] []
 
 
-renderHours : Maybe Hours -> Html Msg
+renderHours : Maybe (List DailyHours) -> Html Msg
 renderHours hrs =
     case hrs of
         Just hours ->
             div []
-                [ List.map renderHour hours.dailyHours |> ul []
+                [ List.map renderHour hours |> ul []
                 ]
 
         Nothing ->
