@@ -1,4 +1,4 @@
-module HarvestAPI exposing (getDaily, getTokenFromHash)
+module HarvestAPI exposing (getDaily, getTokenFromHash, getDailyForDate)
 
 import Dict
 import HarvestTypes exposing (..)
@@ -13,10 +13,27 @@ getDaily : String -> Request Daily
 getDaily token =
     request
         { method = "GET"
-        , headers =
-            [ header "Accept" "application/json"
-            ]
+        , headers = [ header "Accept" "application/json" ]
         , url = "https://comsysto.harvestapp.com/daily?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectJson decodeDaily
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+getDailyForDate : String -> String -> String -> Request Daily
+getDailyForDate token dayOfYear year =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url =
+            "https://comsysto.harvestapp.com/daily/"
+                ++ dayOfYear
+                ++ "/"
+                ++ year
+                ++ "?access_token="
+                ++ token
         , body = emptyBody
         , expect = expectJson decodeDaily
         , timeout = Nothing
