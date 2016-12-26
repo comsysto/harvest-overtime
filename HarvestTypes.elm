@@ -31,6 +31,11 @@ type alias Project =
 -}
 
 
+type alias Hours =
+    { dailyHours : List DailyHours
+    }
+
+
 type alias DailyHours =
     { id : Int
     , notes : String
