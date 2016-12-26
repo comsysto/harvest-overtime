@@ -32,11 +32,11 @@ init location =
                 Nothing ->
                     Cmd.none
     in
-        ( { location = location
-          , access_token = token
-          , res = Nothing
-          }
-        , initCmd
+        ({ location = location
+         , access_token = token
+         , res = Nothing
+         }
+            ! [ Navigation.modifyUrl "#", initCmd ]
         )
 
 
