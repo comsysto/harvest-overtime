@@ -11,9 +11,9 @@ type alias Daily =
 
 
 type alias DayEntry =
-    { id : Int
+    { task : String
     , notes : String
-    , hours : Int
+    , hours : Float
     }
 
 

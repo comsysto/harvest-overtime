@@ -48,7 +48,7 @@ decodeDaily =
 
 dayEntry : Decoder DayEntry
 dayEntry =
-    map3 DayEntry (field "id" int) (field "notes" string) (field "hours" int)
+    map3 DayEntry (field "task" string) (field "notes" string) (field "hours" float)
 
 
 project : Decoder Project

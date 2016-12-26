@@ -27,7 +27,7 @@ init location =
         initCmd =
             case token of
                 Just aToken ->
-                    Http.send Daily (getDaily aToken)
+                    Http.send Daily (getDailyForDate aToken "50" "2016")
 
                 Nothing ->
                     Cmd.none
@@ -70,22 +70,36 @@ view : Model -> Html Msg
 view model =
     case model.access_token of
         Just token ->
-            div [ style [ ( "margin", "1rem" ) ] ] (renderProjectList model.res)
+            div [ style [ ( "margin", "1rem" ) ] ] (renderDaily model.res)
 
         Nothing ->
             renderLoginButton
 
 
-renderProjectList : Maybe Daily -> List (Html Msg)
-renderProjectList daily =
+renderDaily : Maybe Daily -> List (Html Msg)
+renderDaily daily =
     case daily of
         Just daily ->
-            [ h3 [] [ text "Projects" ]
-            , ul [] (List.map (\project -> li [] [ text (.name project) ]) daily.projects)
-            ]
+            [ h3 [] [ text (toString (.forDay daily)) ] ]
+                ++ renderEntries daily
+                ++ renderProjectList daily
 
         Nothing ->
             []
+
+
+renderEntries : Daily -> List (Html Msg)
+renderEntries daily =
+    [ h3 [] [ text "Entries" ]
+    , ul [] (List.map (\entry -> li [] [ text (.task entry ++ " " ++ toString (.hours entry)) ]) daily.dayEntries)
+    ]
+
+
+renderProjectList : Daily -> List (Html Msg)
+renderProjectList daily =
+    [ h3 [] [ text "Projects" ]
+    , ul [] (List.map (\project -> li [] [ text (.name project) ]) daily.projects)
+    ]
 
 
 renderLoginButton : Html Msg
