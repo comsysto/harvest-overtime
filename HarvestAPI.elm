@@ -41,7 +41,7 @@ getDailyForDate token dayOfYear year =
         }
 
 
-getDailyHoursForDateRange : String -> String -> String -> String -> Request DailyHours
+getDailyHoursForDateRange : String -> String -> String -> String -> Request Hours
 getDailyHoursForDateRange user from to token =
     request
         { method = "GET"
@@ -56,7 +56,7 @@ getDailyHoursForDateRange user from to token =
                 ++ "&access_token="
                 ++ token
         , body = emptyBody
-        , expect = expectJson decodeDailyHours
+        , expect = expectJson decodeHours
         , timeout = Nothing
         , withCredentials = False
         }
@@ -90,6 +90,11 @@ dayEntry =
 project : Decoder Project
 project =
     map3 Project (field "id" int) (field "name" string) (field "billable" bool)
+
+
+decodeHours : Decoder Hours
+decodeHours =
+    map Hours (field "day_entries" (list decodeDailyHours))
 
 
 decodeDailyHours : Decoder DailyHours

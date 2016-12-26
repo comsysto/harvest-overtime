@@ -15,7 +15,7 @@ type alias Model =
     { location : Location
     , access_token : Maybe String
     , res : Maybe Daily
-    , dailyHours : Maybe DailyHours
+    , hours : Maybe Hours
     , who_am_i : Maybe WhoAmI
     }
 
@@ -42,14 +42,22 @@ init location =
 
                 Nothing ->
                     Cmd.none
+
+        initCmd3 =
+            case token of
+                Just aToken ->
+                    Http.send Hours (getDailyHoursForDateRange "146305" "20161219" "20161225" aToken)
+
+                Nothing ->
+                    Cmd.none
     in
         ({ location = location
          , access_token = token
          , res = Nothing
-         , dailyHours = Nothing
+         , hours = Nothing
          , who_am_i = Nothing
          }
-            ! [ Navigation.modifyUrl "#", initCmd, initCmd2 ]
+            ! [ Navigation.modifyUrl "#", initCmd, initCmd2, initCmd3 ]
         )
 
 
@@ -60,7 +68,7 @@ init location =
 type Msg
     = LocationChange Location
     | Daily (Result Http.Error HarvestTypes.Daily)
-    | DailyHours (Result Http.Error HarvestTypes.DailyHours)
+    | Hours (Result Http.Error HarvestTypes.Hours)
     | WhoAmI (Result Http.Error HarvestTypes.WhoAmI)
 
 
@@ -76,10 +84,10 @@ update msg model =
         Daily (Err _) ->
             ( { model | access_token = Nothing }, Cmd.none )
 
-        DailyHours (Ok dailyHours) ->
-            ( { model | dailyHours = Just dailyHours }, Cmd.none )
+        Hours (Ok hours) ->
+            ( { model | hours = Just hours }, Cmd.none )
 
-        DailyHours (Err _) ->
+        Hours (Err _) ->
             ( { model | access_token = Nothing }, Cmd.none )
 
         WhoAmI (Ok who) ->
@@ -99,6 +107,8 @@ view model =
         Just token ->
             div []
                 [ div [ style [ ( "margin", "1rem" ) ] ] [ renderUserInfo model.who_am_i ]
+                , hr [] []
+                , div [ style [ ( "margin", "1rem" ) ] ] [ renderHours model.hours ]
                 , hr [] []
                 , div [ style [ ( "margin", "1rem" ) ] ] (renderDaily model.res)
                 ]
@@ -166,6 +176,40 @@ renderUserInfo info =
 
         Nothing ->
             div [] []
+
+
+renderHours : Maybe Hours -> Html Msg
+renderHours hrs =
+    case hrs of
+        Just hours ->
+            div []
+                [ List.map renderHour hours.dailyHours |> ul []
+                ]
+
+        Nothing ->
+            div [] []
+
+
+renderHour : DailyHours -> Html Msg
+renderHour hour =
+    li []
+        [ div []
+            [ span [] [ text "Hours: " ]
+            , span [] [ text <| toString hour.hours ]
+            ]
+        , div []
+            [ span [] [ text "Spent at: " ]
+            , span [] [ text hour.spent_at ]
+            ]
+        , div []
+            [ span [] [ text "Billed: " ]
+            , span [] [ text <| toString hour.is_billed ]
+            ]
+        , div []
+            [ span [] [ text "Closed: " ]
+            , span [] [ text <| toString hour.is_closed ]
+            ]
+        ]
 
 
 harvestAuthUrl : String
