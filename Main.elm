@@ -14,24 +14,27 @@ import Navigation exposing (Location)
 type alias Model =
     { location : Location
     , access_token : Maybe String
-    , res : String
+    , res : Maybe Daily
     }
 
 
 init : Location -> ( Model, Cmd Msg )
 init location =
     let
+        token =
+            getTokenFromHash location.hash
+
         initCmd =
-            case getTokenFromHash location.hash of
-                Just token ->
-                    Http.send Daily (getDaily token)
+            case token of
+                Just aToken ->
+                    Http.send Daily (getDaily aToken)
 
                 Nothing ->
                     Cmd.none
     in
         ( { location = location
-          , access_token = Nothing
-          , res = ""
+          , access_token = token
+          , res = Nothing
           }
         , initCmd
         )
@@ -53,7 +56,7 @@ update msg model =
             ( { model | location = location }, Cmd.none )
 
         Daily (Ok daily) ->
-            ( { model | res = toString daily }, Cmd.none )
+            ( { model | res = Just daily }, Cmd.none )
 
         Daily (Err _) ->
             ( { model | access_token = Nothing }, Cmd.none )
@@ -67,13 +70,22 @@ view : Model -> Html Msg
 view model =
     case model.access_token of
         Just token ->
-            div []
-                [ h3 [] [ text model.location.href ]
-                , div [] [ text token ]
-                ]
+            div [ style [ ( "margin", "1rem" ) ] ] (renderProjectList model.res)
 
         Nothing ->
             renderLoginButton
+
+
+renderProjectList : Maybe Daily -> List (Html Msg)
+renderProjectList daily =
+    case daily of
+        Just daily ->
+            [ h3 [] [ text "Projects" ]
+            , ul [] (List.map (\project -> li [] [ text (.name project) ]) daily.projects)
+            ]
+
+        Nothing ->
+            []
 
 
 renderLoginButton : Html Msg
