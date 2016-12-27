@@ -90,14 +90,14 @@ update msg model =
         Hours (Ok hours) ->
             ( { model | hours = Just hours }, Cmd.none )
 
-        Hours (Err _) ->
-            ( model, Cmd.none )
+        Hours (Err err) ->
+            ( { model | error = toString err }, Cmd.none )
 
         WhoAmI (Ok who) ->
             loadHours model who
 
-        WhoAmI (Err _) ->
-            ( { model | access_token = Nothing }, Cmd.none )
+        WhoAmI (Err err) ->
+            ( { model | error = toString err }, Cmd.none )
 
 
 loadHours : Model -> WhoAmI -> ( Model, Cmd Msg )
@@ -124,6 +124,7 @@ view model =
                 , div [ style [ ( "margin", "1rem" ) ] ] [ renderHours model.hours ]
                 , hr [] []
                 , div [ style [ ( "margin", "1rem" ) ] ] (renderDaily model.res)
+                , div [ style [ ( "margin", "1rem" ) ] ] [ text model.error ]
                 ]
 
         Nothing ->
