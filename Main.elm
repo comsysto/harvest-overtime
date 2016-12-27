@@ -17,6 +17,7 @@ type alias Model =
     , res : Maybe Daily
     , hours : Maybe (List DailyHours)
     , who_am_i : Maybe WhoAmI
+    , error : String
     }
 
 
@@ -57,6 +58,7 @@ init location =
          , res = Nothing
          , hours = Nothing
          , who_am_i = Nothing
+         , error = ""
          }
             ! [ Navigation.modifyUrl "#", initCmd ]
         )
@@ -82,8 +84,8 @@ update msg model =
         Daily (Ok daily) ->
             ( { model | res = Just daily }, Cmd.none )
 
-        Daily (Err _) ->
-            ( { model | access_token = Nothing }, Cmd.none )
+        Daily (Err err) ->
+            ( { model | error = toString err }, Cmd.none )
 
         Hours (Ok hours) ->
             ( { model | hours = Just hours }, Cmd.none )

@@ -4,6 +4,7 @@ import Dict
 import HarvestTypes exposing (..)
 import Http exposing (..)
 import Json.Decode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 
 
 -- Timesheets
@@ -79,17 +80,41 @@ getUserInfo token =
 
 decodeDaily : Decoder Daily
 decodeDaily =
-    map3 Daily (field "day_entries" (list dayEntry)) (field "for_day" string) (field "projects" (list project))
+    decode Daily
+        |> required "day_entries" (list dayEntry)
+        |> required "for_day" string
+        |> required "projects" (list project)
 
 
 dayEntry : Decoder DayEntry
 dayEntry =
-    map3 DayEntry (field "task" string) (field "notes" string) (field "hours" float)
+    decode DayEntry
+        |> required "project_id" string
+        |> required "project" string
+        |> required "user_id" int
+        |> required "spent_at" string
+        |> required "task_id" string
+        |> required "task" string
+        |> required "client" string
+        |> required "id" int
+        |> required "notes" string
+        |> required "created_at" string
+        |> required "updated_at" string
+        |> required "hours_without_timer" float
+        |> required "hours" float
 
 
 project : Decoder Project
 project =
-    map3 Project (field "id" int) (field "name" string) (field "billable" bool)
+    decode Project
+        |> required "id" int
+        |> required "client_id" int
+        |> required "client" string
+        |> required "client_currency" string
+        |> required "client_currency_symbol" string
+        |> required "name" string
+        |> required "code" string
+        |> required "billable" bool
 
 
 decodeHours : Decoder (List DailyHours)
@@ -99,39 +124,39 @@ decodeHours =
 
 decodeDailyHours : Decoder DailyHours
 decodeDailyHours =
-    map6 DailyHours
-        (field "id" int)
-        (maybe (field "notes" string))
-        (field "spent_at" string)
-        (field "hours" float)
-        (field "is_closed" bool)
-        (field "is_billed" bool)
+    decode DailyHours
+        |> required "id" int
+        |> required "notes" (nullable string)
+        |> required "spent_at" string
+        |> required "hours" float
+        |> required "is_closed" bool
+        |> required "is_billed" bool
 
 
 decodeUser : Decoder User
 decodeUser =
-    map6 User
-        (field "id" int)
-        (field "email" string)
-        (field "admin" bool)
-        (field "first_name" string)
-        (field "last_name" string)
-        (field "avatar_url" string)
+    decode User
+        |> required "id" int
+        |> required "email" string
+        |> required "admin" bool
+        |> required "first_name" string
+        |> required "last_name" string
+        |> required "avatar_url" string
 
 
 decodeCompany : Decoder Company
 decodeCompany =
-    map3 Company
-        (field "base_uri" string)
-        (field "full_domain" string)
-        (field "name" string)
+    decode Company
+        |> required "base_uri" string
+        |> required "full_domain" string
+        |> required "name" string
 
 
 decodeWhoAmI : Decoder WhoAmI
 decodeWhoAmI =
-    map2 WhoAmI
-        (field "user" decodeUser)
-        (field "company" decodeCompany)
+    decode WhoAmI
+        |> required "user" decodeUser
+        |> required "company" decodeCompany
 
 
 
