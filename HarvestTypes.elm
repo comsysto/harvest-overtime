@@ -11,15 +11,30 @@ type alias Daily =
 
 
 type alias DayEntry =
-    { task : String
+    { projectId : String
+    , project : String
+    , userId : Int
+    , spentAt : String
+    , taskId : String
+    , task : String
+    , client : String
+    , id : Int
     , notes : String
+    , createdAt : String
+    , updatedAt : String
+    , hoursWithoutTimer : Float
     , hours : Float
     }
 
 
 type alias Project =
     { id : Int
+    , clientId : Int
+    , client : String
+    , clientCurrency : String
+    , clientCurrencySymbol : String
     , name : String
+    , code : String
     , billable : Bool
     }
 
@@ -29,11 +44,6 @@ type alias Project =
    Type for this URL:
    http://help.getharvest.com/api/reports-api/reports/time-reports/#all-entries-by-user-for-timeframe
 -}
-
-
-type alias Hours =
-    { dailyHours : List DailyHours
-    }
 
 
 type alias DailyHours =
