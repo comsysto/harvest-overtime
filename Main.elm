@@ -14,7 +14,6 @@ import Navigation exposing (Location)
 type alias Model =
     { location : Location
     , access_token : Maybe String
-    , res : Maybe Daily
     , hours : Maybe (List DailyHours)
     , who_am_i : Maybe WhoAmI
     , error : String
@@ -55,7 +54,6 @@ init location =
     in
         ({ location = location
          , access_token = token
-         , res = Nothing
          , hours = Nothing
          , who_am_i = Nothing
          , error = ""
@@ -70,7 +68,6 @@ init location =
 
 type Msg
     = LocationChange Location
-    | Daily (Result Http.Error HarvestTypes.Daily)
     | Hours (Result Http.Error (List HarvestTypes.DailyHours))
     | WhoAmI (Result Http.Error HarvestTypes.WhoAmI)
 
@@ -80,12 +77,6 @@ update msg model =
     case msg of
         LocationChange location ->
             ( { model | location = location }, Cmd.none )
-
-        Daily (Ok daily) ->
-            ( { model | res = Just daily }, Cmd.none )
-
-        Daily (Err err) ->
-            ( { model | error = toString err }, Cmd.none )
 
         Hours (Ok hours) ->
             ( { model | hours = Just hours }, Cmd.none )
@@ -123,38 +114,11 @@ view model =
                 , hr [] []
                 , div [ style [ ( "margin", "1rem" ) ] ] [ renderHours model.hours ]
                 , hr [] []
-                , div [ style [ ( "margin", "1rem" ) ] ] (renderDaily model.res)
                 , div [ style [ ( "margin", "1rem" ) ] ] [ text model.error ]
                 ]
 
         Nothing ->
             renderLoginButton
-
-
-renderDaily : Maybe Daily -> List (Html Msg)
-renderDaily daily =
-    case daily of
-        Just daily ->
-            [ h3 [] [ text (toString (.forDay daily)) ] ]
-                ++ renderEntries daily
-                ++ renderProjectList daily
-
-        Nothing ->
-            []
-
-
-renderEntries : Daily -> List (Html Msg)
-renderEntries daily =
-    [ h3 [] [ text "Entries" ]
-    , ul [] (List.map (\entry -> li [] [ text (.task entry ++ " " ++ toString (.hours entry)) ]) daily.dayEntries)
-    ]
-
-
-renderProjectList : Daily -> List (Html Msg)
-renderProjectList daily =
-    [ h3 [] [ text "Projects" ]
-    , ul [] (List.map (\project -> li [] [ text (.name project) ]) daily.projects)
-    ]
 
 
 renderLoginButton : Html Msg
