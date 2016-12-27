@@ -33,24 +33,6 @@ init location =
 
                 Nothing ->
                     Cmd.none
-
-        {-
-           initCmd2 =
-               case token of
-                   Just aToken ->
-                       Http.send Daily (getDailyForDate aToken "50" "2016")
-
-                   Nothing ->
-                       Cmd.none
-
-           initCmd3 =
-               case token of
-                   Just aToken ->
-                       Http.send Hours (getDailyHoursForDateRange "146305" "20161219" "20161225" aToken)
-
-                   Nothing ->
-                       Cmd.none
-        -}
     in
         ({ location = location
          , access_token = token
