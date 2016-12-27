@@ -17,7 +17,7 @@ getDaily token =
         , headers = [ header "Accept" "application/json" ]
         , url = "https://comsysto.harvestapp.com/daily?access_token=" ++ token
         , body = emptyBody
-        , expect = expectJson decodeDaily
+        , expect = expectJson daily
         , timeout = Nothing
         , withCredentials = False
         }
@@ -36,7 +36,7 @@ getDailyForDate token dayOfYear year =
                 ++ "?access_token="
                 ++ token
         , body = emptyBody
-        , expect = expectJson decodeDaily
+        , expect = expectJson daily
         , timeout = Nothing
         , withCredentials = False
         }
@@ -57,7 +57,7 @@ getDailyHoursForDateRange user from to token =
                 ++ "&access_token="
                 ++ token
         , body = emptyBody
-        , expect = expectJson decodeHours
+        , expect = expectJson hours
         , timeout = Nothing
         , withCredentials = False
         }
@@ -72,14 +72,14 @@ getUserInfo token =
             "https://comsysto.harvestapp.com/account/who_am_i?access_token="
                 ++ token
         , body = emptyBody
-        , expect = expectJson decodeWhoAmI
+        , expect = expectJson whoAmI
         , timeout = Nothing
         , withCredentials = False
         }
 
 
-decodeDaily : Decoder Daily
-decodeDaily =
+daily : Decoder Daily
+daily =
     decode Daily
         |> required "day_entries" (list dayEntry)
         |> required "for_day" string
@@ -117,13 +117,13 @@ project =
         |> required "billable" bool
 
 
-decodeHours : Decoder (List DailyHours)
-decodeHours =
-    list (field "day_entry" decodeDailyHours)
+hours : Decoder (List DailyHours)
+hours =
+    list (field "day_entry" dailyHours)
 
 
-decodeDailyHours : Decoder DailyHours
-decodeDailyHours =
+dailyHours : Decoder DailyHours
+dailyHours =
     decode DailyHours
         |> required "id" int
         |> required "notes" (nullable string)
@@ -133,8 +133,8 @@ decodeDailyHours =
         |> required "is_billed" bool
 
 
-decodeUser : Decoder User
-decodeUser =
+user : Decoder User
+user =
     decode User
         |> required "id" int
         |> required "email" string
@@ -144,19 +144,19 @@ decodeUser =
         |> required "avatar_url" string
 
 
-decodeCompany : Decoder Company
-decodeCompany =
+company : Decoder Company
+company =
     decode Company
         |> required "base_uri" string
         |> required "full_domain" string
         |> required "name" string
 
 
-decodeWhoAmI : Decoder WhoAmI
-decodeWhoAmI =
+whoAmI : Decoder WhoAmI
+whoAmI =
     decode WhoAmI
-        |> required "user" decodeUser
-        |> required "company" decodeCompany
+        |> required "user" user
+        |> required "company" company
 
 
 
