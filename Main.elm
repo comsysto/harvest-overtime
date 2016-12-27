@@ -1,7 +1,7 @@
 module Main exposing (..)
 
-import HarvestAPI exposing (..)
-import HarvestTypes exposing (..)
+import Harvest.Api exposing (..)
+import Harvest.Types exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -68,8 +68,8 @@ init location =
 
 type Msg
     = LocationChange Location
-    | Hours (Result Http.Error (List HarvestTypes.DailyHours))
-    | WhoAmI (Result Http.Error HarvestTypes.WhoAmI)
+    | Hours (Result Http.Error (List DailyHours))
+    | WhoAmI (Result Http.Error WhoAmI)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

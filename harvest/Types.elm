@@ -1,4 +1,4 @@
-module HarvestTypes exposing (..)
+module Harvest.Types exposing (..)
 
 -- Timesheets
 
