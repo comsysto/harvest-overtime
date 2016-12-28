@@ -21,7 +21,7 @@ type alias Model =
 
 
 type AppError
-    = NoToken Bool
+    = NoToken String
     | HttpError Http.Error
 
 
@@ -109,7 +109,7 @@ view model =
         (case model.error of
             Just appError ->
                 case appError of
-                    NoToken _ ->
+                    NoToken harvestAuthUrl ->
                         [ div [] [ a [ href harvestAuthUrl ] [ text "Login with Harvest" ] ] ]
 
                     HttpError err ->
@@ -123,11 +123,6 @@ view model =
 totalHours : List DailyHours -> String
 totalHours hours =
     List.map .hours hours |> List.foldl (+) 0 |> toString
-
-
-harvestAuthUrl : String
-harvestAuthUrl =
-    "https://comsysto.harvestapp.com/oauth2/authorize?response_type=token&immediate=true&approval_prompt=auto&client_id=wvIOerEB7xWVfzrSsge3zw&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2FMain.elm"
 
 
 main : Program Never Model Msg

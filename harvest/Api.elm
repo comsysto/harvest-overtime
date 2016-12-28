@@ -82,14 +82,14 @@ getUserInfo token =
 -- Token
 
 
-getTokenFromHash : String -> Task.Task Bool String
+getTokenFromHash : String -> Task.Task String String
 getTokenFromHash s =
     case Dict.get "access_token" (parseUrlParams s) of
         Just a ->
             Task.succeed a
 
         Nothing ->
-            Task.fail True
+            Task.fail "https://comsysto.harvestapp.com/oauth2/authorize?response_type=token&immediate=true&approval_prompt=auto&client_id=wvIOerEB7xWVfzrSsge3zw&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2FMain.elm"
 
 
 parseUrlParams : String -> Dict.Dict String String
