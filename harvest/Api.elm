@@ -1,9 +1,10 @@
 module Harvest.Api exposing (getDaily, getTokenFromHash, getDailyForDate, getUserInfo, getDailyHoursForDateRange)
 
-import Harvest.Decoder exposing (..)
 import Dict
-import Http exposing (..)
+import Harvest.Decoder exposing (..)
 import Harvest.Types exposing (..)
+import Http exposing (..)
+import Task
 
 
 -- Timesheets
@@ -81,13 +82,14 @@ getUserInfo token =
 -- Token
 
 
-getTokenFromHash : String -> Maybe String
+getTokenFromHash : String -> Task.Task Bool String
 getTokenFromHash s =
-    let
-        params =
-            parseUrlParams s
-    in
-        Dict.get "access_token" params
+    case Dict.get "access_token" (parseUrlParams s) of
+        Just a ->
+            Task.succeed a
+
+        Nothing ->
+            Task.fail True
 
 
 parseUrlParams : String -> Dict.Dict String String
