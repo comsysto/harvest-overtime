@@ -15,8 +15,7 @@ import Time.DateTime as Date
 
 
 type alias Model =
-    { location : Location
-    , access_token : Maybe String
+    { access_token : Maybe String
     , hours : List DailyHours
     , error : String
     }
@@ -44,8 +43,7 @@ init location =
                 Nothing ->
                     Task.fail (Http.BadUrl "No Access Token found.")
     in
-        ( { location = location
-          , access_token = token
+        ( { access_token = token
           , hours = []
           , error = ""
           }
@@ -91,8 +89,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LocationChange location ->
-            ( { model | location = location }, Cmd.none )
+        LocationChange _ ->
+            ( model, Cmd.none )
 
         Hours hours ->
             ( { model | hours = hours }, Cmd.none )
