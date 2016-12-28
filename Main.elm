@@ -7,6 +7,8 @@ import Html.Attributes exposing (..)
 import Http
 import Navigation exposing (Location)
 import Task
+import Time
+import Time.DateTime as Date
 
 
 -- Model
@@ -30,17 +32,14 @@ init location =
             case token of
                 Just aToken ->
                     Http.toTask (getUserInfo aToken)
-                        |> Task.andThen (\who -> Task.succeed who.user.id)
                         |> Task.andThen
-                            (\userId ->
-                                Http.toTask
-                                    (getDailyHoursForDateRange
-                                        (toString userId)
-                                        "20161219"
-                                        "20161225"
-                                        aToken
-                                    )
+                            (\who ->
+                                Task.map2
+                                    (getHoursForCurrentYear aToken)
+                                    (Task.succeed who.user.id)
+                                    Time.now
                             )
+                        |> Task.andThen (\a -> a)
 
                 Nothing ->
                     Task.fail (Http.BadUrl "No Access Token found.")
@@ -62,6 +61,21 @@ getHours result =
 
         Err err ->
             Failed err
+
+
+getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task Http.Error (List DailyHours)
+getHoursForCurrentYear token userId time =
+    Http.toTask
+        (getDailyHoursForDateRange (toString userId)
+            (getCurrentYearFromTime time ++ "0101")
+            (getCurrentYearFromTime time ++ "1231")
+            token
+        )
+
+
+getCurrentYearFromTime : Time.Time -> String
+getCurrentYearFromTime time =
+    toString (Date.year (Date.fromTimestamp time))
 
 
 
@@ -114,10 +128,7 @@ renderLoginButton =
 
 renderHours : List DailyHours -> Html Msg
 renderHours hours =
-    div []
-        [ h2 [] [ text "Hours for the week 2016-12-19 till 2016-12-25 (dates hardcoded)" ]
-        , List.map renderHour hours |> ul []
-        ]
+    div [] [ List.map renderHour hours |> ul [] ]
 
 
 renderHour : DailyHours -> Html Msg
