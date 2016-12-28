@@ -39,7 +39,7 @@ init location =
                                     (Task.succeed who.user.id)
                                     Time.now
                             )
-                        |> Task.andThen (\a -> a)
+                        |> Task.andThen identity
 
                 Nothing ->
                     Task.fail (Http.BadUrl "No Access Token found.")
