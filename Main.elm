@@ -28,7 +28,7 @@ init location =
         token =
             getTokenFromHash location.hash
 
-        initCmd =
+        loadHoursForCurrentYear =
             case token of
                 Just aToken ->
                     Http.toTask (getUserInfo aToken)
@@ -49,13 +49,13 @@ init location =
           , hours = []
           , error = ""
           }
-        , Task.attempt getHours initCmd
+        , Task.attempt handleLoadedHours loadHoursForCurrentYear
         )
 
 
-getHours : Result Http.Error (List DailyHours) -> Msg
-getHours result =
-    case result of
+handleLoadedHours : Result Http.Error (List DailyHours) -> Msg
+handleLoadedHours loadedHours =
+    case loadedHours of
         Ok res ->
             Hours res
 
@@ -65,17 +65,17 @@ getHours result =
 
 getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task Http.Error (List DailyHours)
 getHoursForCurrentYear token userId time =
-    Http.toTask
-        (getDailyHoursForDateRange (toString userId)
-            (getCurrentYearFromTime time ++ "0101")
-            (getCurrentYearFromTime time ++ "1231")
-            token
-        )
+    getDailyHoursForDateRange
+        (toString userId)
+        (getCurrentYearFromTime time ++ "0101")
+        (getCurrentYearFromTime time ++ "1231")
+        token
+        |> Http.toTask
 
 
 getCurrentYearFromTime : Time.Time -> String
 getCurrentYearFromTime time =
-    toString (Date.year (Date.fromTimestamp time))
+    Date.fromTimestamp time |> Date.year |> toString
 
 
 
@@ -127,7 +127,7 @@ renderLoginButton =
 
 totalHours : List DailyHours -> String
 totalHours hours =
-    toString (List.foldl (+) 0 (List.map .hours hours))
+    List.map .hours hours |> List.foldl (+) 0 |> toString
 
 
 harvestAuthUrl : String
