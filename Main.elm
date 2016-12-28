@@ -15,7 +15,7 @@ import Time.DateTime as Date
 
 
 type alias Model =
-    { hours : List DailyHours
+    { hours : List DayEntry
     , error : Maybe AppError
     }
 
@@ -32,7 +32,7 @@ init location =
             Task.mapError NoToken (getTokenFromHash location.hash)
                 |> Task.andThen
                     (\token ->
-                        Task.mapError HttpError (Http.toTask (getUserInfo token))
+                        Task.mapError HttpError (getUserInfo token |> Http.toTask)
                             |> Task.andThen
                                 (\who ->
                                     Task.map2
@@ -50,7 +50,7 @@ init location =
         )
 
 
-handleLoadedHours : Result AppError (List DailyHours) -> Msg
+handleLoadedHours : Result AppError (List DayEntry) -> Msg
 handleLoadedHours loadedHours =
     case loadedHours of
         Ok res ->
@@ -60,7 +60,7 @@ handleLoadedHours loadedHours =
             Failed err
 
 
-getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task AppError (List DailyHours)
+getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task AppError (List DayEntry)
 getHoursForCurrentYear token userId time =
     getDailyHoursForDateRange
         (toString userId)
@@ -82,7 +82,7 @@ getCurrentYearFromTime time =
 
 type Msg
     = LocationChange Location
-    | Hours (List DailyHours)
+    | Hours (List DayEntry)
     | Failed AppError
 
 
@@ -113,16 +113,23 @@ view model =
                         [ div [] [ a [ href harvestAuthUrl ] [ text "Login with Harvest" ] ] ]
 
                     HttpError err ->
-                        [ div [] [ text "Network Error" ] ]
+                        [ div [] [ text ("Network Error" ++ toString err) ] ]
 
             Nothing ->
-                [ h3 [] [ text (totalHours model.hours ++ " hours worked") ] ]
+                [ h3 [] [ text ((totalHours model.hours |> toString) ++ " hours worked") ]
+                , h3 [] [ text ((overtimeHours model.hours |> toString) ++ " hours overtime") ]
+                ]
         )
 
 
-totalHours : List DailyHours -> String
+overtimeHours : List DayEntry -> Float
+overtimeHours hours =
+    List.filter (\hour -> (toString hour.taskId) == overtimeTaskId) hours |> totalHours
+
+
+totalHours : List DayEntry -> Float
 totalHours hours =
-    List.map .hours hours |> List.foldl (+) 0 |> toString
+    List.map .hours hours |> List.foldl (+) 0
 
 
 main : Program Never Model Msg
@@ -133,3 +140,8 @@ main =
         , update = update
         , subscriptions = always Sub.none
         }
+
+
+overtimeTaskId : String
+overtimeTaskId =
+    "2842526"
