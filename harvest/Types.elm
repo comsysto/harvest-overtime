@@ -1,5 +1,8 @@
 module Harvest.Types exposing (..)
 
+import Date exposing (Date)
+
+
 -- Timesheets
 
 
@@ -49,7 +52,7 @@ type alias Project =
 type alias DailyHours =
     { id : Int
     , notes : Maybe String
-    , spent_at : String
+    , spent_at : Date
     , hours : Float
     , is_closed : Bool
     , is_billed : Bool
