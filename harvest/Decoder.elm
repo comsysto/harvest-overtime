@@ -58,6 +58,8 @@ dailyHours =
         |> required "hours" float
         |> required "is_closed" bool
         |> required "is_billed" bool
+        |> required "project_id" int
+        |> required "task_id" int
 
 
 user : Decoder User

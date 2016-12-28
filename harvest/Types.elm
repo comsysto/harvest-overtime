@@ -53,6 +53,8 @@ type alias DailyHours =
     , hours : Float
     , is_closed : Bool
     , is_billed : Bool
+    , taskId : Int
+    , projectId : Int
     }
 
 
