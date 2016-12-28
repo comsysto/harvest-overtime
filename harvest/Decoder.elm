@@ -3,6 +3,7 @@ module Harvest.Decoder exposing (..)
 import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Harvest.Types exposing (..)
+import Json.Decode.Extra as JDE exposing (date)
 
 
 daily : Decoder Daily
@@ -54,7 +55,7 @@ dailyHours =
     decode DailyHours
         |> required "id" int
         |> required "notes" (nullable string)
-        |> required "spent_at" string
+        |> required "spent_at" JDE.date
         |> required "hours" float
         |> required "is_closed" bool
         |> required "is_billed" bool
