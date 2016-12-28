@@ -14,18 +14,14 @@ type alias Daily =
 
 
 type alias DayEntry =
-    { projectId : String
-    , project : String
+    { projectId : Int
     , userId : Int
-    , spentAt : String
-    , taskId : String
-    , task : String
-    , client : String
+    , spentAt : Date
+    , taskId : Int
     , id : Int
-    , notes : String
+    , notes : Maybe String
     , createdAt : String
     , updatedAt : String
-    , hoursWithoutTimer : Float
     , hours : Float
     }
 
@@ -42,31 +38,6 @@ type alias Project =
     }
 
 
-
-{-
-   Type for this URL:
-   http://help.getharvest.com/api/reports-api/reports/time-reports/#all-entries-by-user-for-timeframe
--}
-
-
-type alias DailyHours =
-    { id : Int
-    , notes : Maybe String
-    , spent_at : Date
-    , hours : Float
-    , is_closed : Bool
-    , is_billed : Bool
-    , taskId : Int
-    , projectId : Int
-    }
-
-
-
-{-
-   WhoAmI
-
-   GET https://YOURACCOUNT.harvestapp.com/account/who_am_i
--}
 
 
 type alias User =

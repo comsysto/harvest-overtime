@@ -3,7 +3,7 @@ module Harvest.Decoder exposing (..)
 import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Harvest.Types exposing (..)
-import Json.Decode.Extra as JDE exposing (date)
+import Json.Decode.Extra exposing (date)
 
 
 daily : Decoder Daily
@@ -17,18 +17,14 @@ daily =
 dayEntry : Decoder DayEntry
 dayEntry =
     decode DayEntry
-        |> required "project_id" string
-        |> required "project" string
+        |> required "project_id" int
         |> required "user_id" int
-        |> required "spent_at" string
-        |> required "task_id" string
-        |> required "task" string
-        |> required "client" string
+        |> required "spent_at" date
+        |> required "task_id" int
         |> required "id" int
-        |> required "notes" string
+        |> required "notes" (nullable string)
         |> required "created_at" string
         |> required "updated_at" string
-        |> required "hours_without_timer" float
         |> required "hours" float
 
 
@@ -45,22 +41,9 @@ project =
         |> required "billable" bool
 
 
-hours : Decoder (List DailyHours)
+hours : Decoder (List DayEntry)
 hours =
-    list (field "day_entry" dailyHours)
-
-
-dailyHours : Decoder DailyHours
-dailyHours =
-    decode DailyHours
-        |> required "id" int
-        |> required "notes" (nullable string)
-        |> required "spent_at" JDE.date
-        |> required "hours" float
-        |> required "is_closed" bool
-        |> required "is_billed" bool
-        |> required "project_id" int
-        |> required "task_id" int
+    list (field "day_entry" dayEntry)
 
 
 user : Decoder User
