@@ -109,10 +109,9 @@ view : Model -> Html Msg
 view model =
     case model.access_token of
         Just token ->
-            div []
-                [ div [ style [ ( "margin", "1rem" ) ] ] [ renderHours model.hours ]
-                , hr [] []
-                , div [ style [ ( "margin", "1rem" ) ] ] [ text model.error ]
+            div [ style [ ( "margin", "1rem" ) ] ]
+                [ h3 [] [ text (totalHours model.hours ++ " hours worked") ]
+                , div [] [ text model.error ]
                 ]
 
         Nothing ->
@@ -126,31 +125,9 @@ renderLoginButton =
         ]
 
 
-renderHours : List DailyHours -> Html Msg
-renderHours hours =
-    div [] [ List.map renderHour hours |> ul [] ]
-
-
-renderHour : DailyHours -> Html Msg
-renderHour hour =
-    li []
-        [ div []
-            [ span [] [ text "Hours: " ]
-            , span [] [ text <| toString hour.hours ]
-            ]
-        , div []
-            [ span [] [ text "Spent at: " ]
-            , span [] [ text hour.spent_at ]
-            ]
-        , div []
-            [ span [] [ text "Billed: " ]
-            , span [] [ text <| toString hour.is_billed ]
-            ]
-        , div []
-            [ span [] [ text "Closed: " ]
-            , span [] [ text <| toString hour.is_closed ]
-            ]
-        ]
+totalHours : List DailyHours -> String
+totalHours hours =
+    toString (List.foldl (+) 0 (List.map .hours hours))
 
 
 harvestAuthUrl : String
