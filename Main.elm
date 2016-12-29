@@ -1,14 +1,17 @@
 module Main exposing (..)
 
+import Date
+import Date.Extra
 import Harvest.Api exposing (..)
 import Harvest.Types exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
+import List.Extra
 import Navigation exposing (Location)
 import Task
 import Time
-import Time.DateTime as Date
+import Time.DateTime as DateTime
 
 
 -- Model
@@ -73,7 +76,7 @@ getHoursForCurrentYear token userId time =
 
 getCurrentYearFromTime : Time.Time -> String
 getCurrentYearFromTime time =
-    Date.fromTimestamp time |> Date.year |> toString
+    DateTime.fromTimestamp time |> DateTime.year |> toString
 
 
 
@@ -118,8 +121,21 @@ view model =
             Nothing ->
                 [ h3 [] [ text ((totalHours model.hours |> toString) ++ " hours worked") ]
                 , h3 [] [ text ((overtimeHours model.hours |> toString) ++ " hours overtime") ]
+                , ul [] (List.map (\e -> li [] [ e |> toString |> text ]) (groupByCalendarWeek model.hours))
                 ]
         )
+
+
+groupByCalendarWeek : List DayEntry -> List ( Maybe String, String, Maybe String )
+groupByCalendarWeek hours =
+    List.map
+        (\ds ->
+            ( (List.head ds |> Maybe.andThen (\d -> Just d.spentAt) |> Maybe.andThen (\d -> Just (toString (Date.day d) ++ toString (Date.month d) ++ toString (Date.year d))))
+            , (List.foldr (+) 0 (List.map .hours ds) |> toString) ++ " hours"
+            , (List.head ds |> Maybe.andThen (\d -> Just ("Week: " ++ (toString (Date.Extra.weekNumber d.spentAt)))))
+            )
+        )
+        (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
 
 
 overtimeHours : List DayEntry -> Float
