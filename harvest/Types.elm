@@ -1,8 +1,5 @@
 module Harvest.Types exposing (..)
 
-import Date exposing (Date)
-
-
 -- Timesheets
 
 
@@ -16,13 +13,12 @@ type alias Daily =
 type alias DayEntry =
     { projectId : Int
     , userId : Int
-    , spentAt : Date
+    , spentAt : String
     , taskId : Int
     , id : Int
     , notes : Maybe String
-    , createdAt : String
-    , updatedAt : String
     , hours : Float
+    , weekNumber : Int
     }
 
 
@@ -36,8 +32,6 @@ type alias Project =
     , code : String
     , billable : Bool
     }
-
-
 
 
 type alias User =
