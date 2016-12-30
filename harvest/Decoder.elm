@@ -3,7 +3,7 @@ module Harvest.Decoder exposing (..)
 import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Harvest.Types exposing (..)
-import Json.Decode.Extra exposing (date)
+import DateUtil exposing (parseDateFromISO8601, weekNumber)
 
 
 daily : Decoder Daily
@@ -16,16 +16,17 @@ daily =
 
 dayEntry : Decoder DayEntry
 dayEntry =
-    decode DayEntry
-        |> required "project_id" int
-        |> required "user_id" int
-        |> required "spent_at" date
-        |> required "task_id" int
-        |> required "id" int
-        |> required "notes" (nullable string)
-        |> required "created_at" string
-        |> required "updated_at" string
-        |> required "hours" float
+    map8 DayEntry
+        (field "project_id" int)
+        (field "user_id" int)
+        (field "spent_at" string)
+        (field "task_id" int)
+        (field "id" int)
+        (maybe (field "notes" string))
+        (field "hours" float)
+        ((field "spent_at" string)
+            |> andThen decodeWeekNumber
+        )
 
 
 project : Decoder Project
@@ -70,3 +71,12 @@ whoAmI =
     decode WhoAmI
         |> required "user" user
         |> required "company" company
+
+
+decodeWeekNumber : String -> Decoder Int
+decodeWeekNumber isoDate =
+    let
+        weekNr =
+            weekNumber <| parseDateFromISO8601 isoDate
+    in
+        (succeed weekNr)
