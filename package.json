@@ -1,0 +1,25 @@
+{
+  "name": "harvest-overtime",
+  "version": "0.0.1",
+  "description": "Harvest overtime calculator",
+  "main": "Main.elm",
+  "scripts": {
+    "prebuild": "elm-make Main.elm --output elm.js",
+    "build": "uglifyjs elm.js -c -m -o build/elm.min.js",
+    "postbuild": "rm elm.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/comsysto/harvest-overtime.git"
+  },
+  "author": "comSysto",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/comsysto/harvest-overtime/issues"
+  },
+  "homepage": "https://github.com/comsysto/harvest-overtime#readme",
+  "devDependencies": {
+    "elm": "^0.18.0",
+    "uglify-js": "^2.7.5"
+  }
+}
