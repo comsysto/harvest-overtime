@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Date exposing (Date)
 import Date.Extra
 import Harvest.Api exposing (..)
 import Harvest.Types exposing (..)
@@ -68,19 +69,27 @@ handleLoadedHours loadedHours =
 
 getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task AppError (List DayEntry)
 getHoursForCurrentYear token userId time =
-    getDailyHoursForDateRange
-        Config.account
-        (toString userId)
-        (getCurrentYearFromTime time ++ "0103")
-        (getCurrentYearFromTime time ++ "1231")
-        token
-        |> Http.toTask
-        |> Task.mapError HttpError
+    let
+        from =
+            DateTime.fromTimestamp time
+                |> DateTime.year
+                |> mondayOfTheFirstWeek
+                |> Date.Extra.toFormattedString "yyyyMMdd"
 
-
-getCurrentYearFromTime : Time.Time -> String
-getCurrentYearFromTime time =
-    DateTime.fromTimestamp time |> DateTime.year |> toString
+        to =
+            DateTime.fromTimestamp time
+                |> DateTime.year
+                |> sundayOfTheLastWeek
+                |> Date.Extra.toFormattedString "yyyyMMdd"
+    in
+        getDailyHoursForDateRange
+            Config.account
+            (toString userId)
+            from
+            to
+            token
+            |> Http.toTask
+            |> Task.mapError HttpError
 
 
 
@@ -177,3 +186,27 @@ main =
 overtimeTaskId : String
 overtimeTaskId =
     "2842526"
+
+
+mondayOfTheFirstWeek : Int -> Date
+mondayOfTheFirstWeek yr =
+    let
+        d =
+            Date.Extra.fromCalendarDate yr Date.Jan 1
+    in
+        if Date.Extra.weekNumber d /= 1 then
+            Date.Extra.add Date.Extra.Day (8 - Date.Extra.weekdayNumber d) d
+        else
+            Date.Extra.add Date.Extra.Day (1 - Date.Extra.weekdayNumber d) d
+
+
+sundayOfTheLastWeek : Int -> Date
+sundayOfTheLastWeek yr =
+    let
+        d =
+            Date.Extra.fromCalendarDate (yr + 1) Date.Jan 1
+    in
+        if Date.Extra.weekNumber d /= 1 then
+            Date.Extra.add Date.Extra.Day (7 - Date.Extra.weekdayNumber d) d
+        else
+            Date.Extra.add Date.Extra.Day (0 - Date.Extra.weekdayNumber d) d
