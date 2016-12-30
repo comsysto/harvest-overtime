@@ -118,8 +118,7 @@ view model =
                         [ div [] [ text ("Network Error" ++ toString err) ] ]
 
             Nothing ->
-                [ h3 [] [ text ((totalHours model.hours |> toString) ++ " hours worked") ]
-                , h3 [] [ text ((overtimeHours model.hours |> toString) ++ " hours overtime") ]
+                [ h3 [] [ text ("2016 Overtime " ++ toString (overtimeHours model.hours) ++ "h " ++ toString ((overtimeHours model.hours) / 8.0) ++ "d") ]
                 , ul [] (List.map renderWeek (groupByCalendarWeek model.hours))
                 ]
         )
@@ -131,7 +130,7 @@ type alias WeekEntry =
 
 overtimeHours : List DayEntry -> Float
 overtimeHours hours =
-    List.filter (\hour -> (toString hour.taskId) == overtimeTaskId) hours |> totalHours
+    (List.foldl (+) 0 (List.map .overtime (groupByCalendarWeek hours))) - (overtimeWorked hours)
 
 
 renderWeek : WeekEntry -> Html msg
@@ -148,6 +147,11 @@ groupByCalendarWeek hours =
     List.indexedMap
         (\i ds -> WeekEntry (i + 1) (totalHours ds) (totalHours ds - 40))
         (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
+
+
+overtimeWorked : List DayEntry -> Float
+overtimeWorked hours =
+    List.filter (\hour -> (toString hour.taskId) == overtimeTaskId) hours |> totalHours
 
 
 totalHours : List DayEntry -> Float
