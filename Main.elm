@@ -1,6 +1,5 @@
 module Main exposing (..)
 
-import Date
 import Date.Extra
 import Harvest.Api exposing (..)
 import Harvest.Types exposing (..)
@@ -67,7 +66,7 @@ getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task AppError (List 
 getHoursForCurrentYear token userId time =
     getDailyHoursForDateRange
         (toString userId)
-        (getCurrentYearFromTime time ++ "0101")
+        (getCurrentYearFromTime time ++ "0103")
         (getCurrentYearFromTime time ++ "1231")
         token
         |> Http.toTask
@@ -121,26 +120,34 @@ view model =
             Nothing ->
                 [ h3 [] [ text ((totalHours model.hours |> toString) ++ " hours worked") ]
                 , h3 [] [ text ((overtimeHours model.hours |> toString) ++ " hours overtime") ]
-                , ul [] (List.map (\e -> li [] [ e |> toString |> text ]) (groupByCalendarWeek model.hours))
+                , ul [] (List.map renderWeek (groupByCalendarWeek model.hours))
                 ]
         )
 
 
-groupByCalendarWeek : List DayEntry -> List ( Maybe String, String, Maybe String )
-groupByCalendarWeek hours =
-    List.map
-        (\ds ->
-            ( (List.head ds |> Maybe.andThen (\d -> Just d.spentAt) |> Maybe.andThen (\d -> Just (toString (Date.day d) ++ toString (Date.month d) ++ toString (Date.year d))))
-            , (List.foldr (+) 0 (List.map .hours ds) |> toString) ++ " hours"
-            , (List.head ds |> Maybe.andThen (\d -> Just ("Week: " ++ (toString (Date.Extra.weekNumber d.spentAt)))))
-            )
-        )
-        (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
+type alias WeekEntry =
+    { number : Int, hours : Float, overtime : Float }
 
 
 overtimeHours : List DayEntry -> Float
 overtimeHours hours =
     List.filter (\hour -> (toString hour.taskId) == overtimeTaskId) hours |> totalHours
+
+
+renderWeek : WeekEntry -> Html msg
+renderWeek weekEntry =
+    let
+        { number, hours, overtime } =
+            weekEntry
+    in
+        li [] [ "Week " ++ toString number ++ ": " ++ toString hours ++ "h " ++ "Overtime:" ++ toString overtime ++ "h" |> text ]
+
+
+groupByCalendarWeek : List DayEntry -> List WeekEntry
+groupByCalendarWeek hours =
+    List.indexedMap
+        (\i ds -> WeekEntry (i + 1) (totalHours ds) (totalHours ds - 40))
+        (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
 
 
 totalHours : List DayEntry -> Float
