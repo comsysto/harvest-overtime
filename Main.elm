@@ -11,6 +11,7 @@ import Navigation exposing (Location)
 import Task
 import Time
 import Time.DateTime as DateTime
+import Config as Config
 
 
 -- Model
@@ -30,11 +31,14 @@ type AppError
 init : Location -> ( Model, Cmd Msg )
 init location =
     let
+        authenticationUrl =
+            authUrl Config.account Config.clientId Config.redirectUrl
+
         loadHoursForCurrentYear =
-            Task.mapError NoToken (getTokenFromHash location.hash)
+            Task.mapError NoToken (checkAccessTokenAvailable location.hash authenticationUrl)
                 |> Task.andThen
                     (\token ->
-                        Task.mapError HttpError (getUserInfo token |> Http.toTask)
+                        Task.mapError HttpError (getUserInfo Config.account token |> Http.toTask)
                             |> Task.andThen
                                 (\who ->
                                     Task.map2
@@ -65,6 +69,7 @@ handleLoadedHours loadedHours =
 getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task AppError (List DayEntry)
 getHoursForCurrentYear token userId time =
     getDailyHoursForDateRange
+        Config.account
         (toString userId)
         (getCurrentYearFromTime time ++ "0103")
         (getCurrentYearFromTime time ++ "1231")
