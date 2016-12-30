@@ -9,6 +9,7 @@ import Navigation exposing (Location)
 import Task
 import Time
 import Time.DateTime as Date
+import Dict exposing (empty, update)
 
 
 -- Model
@@ -23,6 +24,16 @@ type alias Model =
 type AppError
     = NoToken String
     | HttpError Http.Error
+
+
+
+{- TO BE USED -}
+
+
+type alias WeeklyHours =
+    { hours : Float
+    , overtime : Float
+    }
 
 
 init : Location -> ( Model, Cmd Msg )
@@ -77,6 +88,41 @@ getCurrentYearFromTime time =
 
 
 
+--foldl : (a -> b -> b) -> b -> List a -> b
+
+
+aggregate : DayEntry -> Dict.Dict Int Float -> Dict.Dict Int Float
+aggregate hour dict =
+    let
+        entry =
+            Dict.get hour.weekNumber dict
+    in
+        case entry of
+            Just hrs ->
+                Dict.insert hour.weekNumber (hour.hours + hrs) dict
+
+            Nothing ->
+                Dict.insert hour.weekNumber hour.hours dict
+
+
+weeklyHours : List DayEntry -> Dict.Dict Int Float
+weeklyHours hours =
+    List.foldl aggregate Dict.empty hours
+
+
+
+{- TO BE USED -}
+
+
+calculateHours : DayEntry -> WeeklyHours -> WeeklyHours
+calculateHours dayEntry weekHrs =
+    if (toString dayEntry.taskId) == overtimeTaskId then
+        { weekHrs | hours = weekHrs.hours + dayEntry.hours, overtime = weekHrs.overtime - dayEntry.hours }
+    else
+        { weekHrs | hours = weekHrs.hours + dayEntry.hours, overtime = weekHrs.overtime - dayEntry.hours }
+
+
+
 -- Update
 
 
@@ -118,6 +164,7 @@ view model =
             Nothing ->
                 [ h3 [] [ text ((totalHours model.hours |> toString) ++ " hours worked") ]
                 , h3 [] [ text ((overtimeHours model.hours |> toString) ++ " hours overtime") ]
+                , h3 [] [ text ((Debug.log "Weeks" (weeklyHours model.hours) |> Dict.size |> toString) ++ " weeks") ]
                 ]
         )
 

@@ -82,4 +82,4 @@ weekdayAsInt date =
             6
 
         Sun ->
-            7
+            0
