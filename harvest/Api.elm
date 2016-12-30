@@ -1,4 +1,4 @@
-module Harvest.Api exposing (getTokenFromHash, getUserInfo, getDailyHoursForDateRange)
+module Harvest.Api exposing (checkAccessTokenAvailable, authUrl, getUserInfo, getDailyHoursForDateRange)
 
 import Dict
 import Harvest.Decoder exposing (..)
@@ -10,20 +10,12 @@ import Task
 -- Timesheets
 
 
-getDailyHoursForDateRange : String -> String -> String -> String -> Request (List DayEntry)
-getDailyHoursForDateRange user from to token =
+getDailyHoursForDateRange : String -> String -> String -> String -> String -> Request (List DayEntry)
+getDailyHoursForDateRange accountId userId from to token =
     request
         { method = "GET"
         , headers = [ header "Accept" "application/json" ]
-        , url =
-            "https://comsysto.harvestapp.com/people/"
-                ++ user
-                ++ "/entries?from="
-                ++ from
-                ++ "&to="
-                ++ to
-                ++ "&access_token="
-                ++ token
+        , url = urlDailyHours accountId userId from to token
         , body = emptyBody
         , expect = expectJson hours
         , timeout = Nothing
@@ -31,14 +23,12 @@ getDailyHoursForDateRange user from to token =
         }
 
 
-getUserInfo : String -> Request WhoAmI
-getUserInfo token =
+getUserInfo : String -> String -> Request WhoAmI
+getUserInfo accountId token =
     request
         { method = "GET"
         , headers = [ header "Accept" "application/json" ]
-        , url =
-            "https://comsysto.harvestapp.com/account/who_am_i?access_token="
-                ++ token
+        , url = urlWhoAmI accountId token
         , body = emptyBody
         , expect = expectJson whoAmI
         , timeout = Nothing
@@ -47,17 +37,50 @@ getUserInfo token =
 
 
 
+-- Harvest URLs
+
+
+urlWhoAmI : String -> String -> String
+urlWhoAmI accountId token =
+    "https://" ++ accountId ++ ".harvestapp.com/account/who_am_i?access_token=" ++ token
+
+
+urlDailyHours : String -> String -> String -> String -> String -> String
+urlDailyHours accountId userId from to token =
+    "https://"
+        ++ accountId
+        ++ ".harvestapp.com/people/"
+        ++ userId
+        ++ "/entries?from="
+        ++ from
+        ++ "&to="
+        ++ to
+        ++ "&access_token="
+        ++ token
+
+
+authUrl : String -> String -> String -> String
+authUrl accountId clientId redirectUrl =
+    "https://"
+        ++ accountId
+        ++ ".harvestapp.com/oauth2/authorize?response_type=token&immediate=true&approval_prompt=auto&client_id="
+        ++ clientId
+        ++ "&redirect_uri="
+        ++ (Http.encodeUri redirectUrl)
+
+
+
 -- Token
 
 
-getTokenFromHash : String -> Task.Task String String
-getTokenFromHash s =
-    case Dict.get "access_token" (parseUrlParams s) of
+checkAccessTokenAvailable : String -> String -> Task.Task String String
+checkAccessTokenAvailable urlHashToParse authenticationUrl =
+    case Dict.get "access_token" (parseUrlParams urlHashToParse) of
         Just a ->
             Task.succeed a
 
         Nothing ->
-            Task.fail "https://comsysto.harvestapp.com/oauth2/authorize?response_type=token&immediate=true&approval_prompt=auto&client_id=wvIOerEB7xWVfzrSsge3zw&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2FMain.elm"
+            Task.fail authenticationUrl
 
 
 parseUrlParams : String -> Dict.Dict String String
