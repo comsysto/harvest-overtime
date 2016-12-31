@@ -132,9 +132,16 @@ view model =
                         [ div [] [ text ("Network Error" ++ toString err) ] ]
 
             Nothing ->
-                [ h3 [] [ text ("2016 Overtime " ++ toString (overtimeHours model.hours) ++ "h " ++ toString ((overtimeHours model.hours) / 8.0) ++ "d") ]
-                , ul [] (List.map renderWeek (groupByCalendarWeek model.hours))
-                ]
+                let
+                    weekEntries =
+                        groupByCalendarWeek model.hours
+
+                    overtimeInHours =
+                        overtimeHours weekEntries (overtimeWorked model.hours)
+                in
+                    [ h3 [] [ text ("2016 Overtime " ++ toString overtimeInHours ++ "h " ++ toString (overtimeInHours / 8.0) ++ "d") ]
+                    , ul [] (List.map renderWeek weekEntries)
+                    ]
         )
 
 
@@ -142,9 +149,9 @@ type alias WeekEntry =
     { number : Int, hours : Float, overtime : Float }
 
 
-overtimeHours : List DayEntry -> Float
-overtimeHours hours =
-    (List.foldl (+) 0 (List.map .overtime (groupByCalendarWeek hours))) - (overtimeWorked hours)
+overtimeHours : List WeekEntry -> Float -> Float
+overtimeHours weekEntries overtimeWorked =
+    (List.foldl (+) 0 (List.map .overtime weekEntries)) - overtimeWorked
 
 
 renderWeek : WeekEntry -> Html msg
