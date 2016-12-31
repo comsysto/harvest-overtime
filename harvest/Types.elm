@@ -89,8 +89,8 @@ type alias Modules =
 
 
 type alias Company =
-    { base_uri : String
-    , full_domain : String
+    { baseUri : String
+    , fullDomain : String
     , name : String
     , active : Bool
     , weekStartDay : String
