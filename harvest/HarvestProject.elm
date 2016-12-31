@@ -85,12 +85,12 @@ getProject accountId projectId token =
         }
 
 
-getAllProjects : String -> String -> Request (List Project)
-getAllProjects accountId token =
+getAllProjects : String -> String -> Dict String String -> Request (List Project)
+getAllProjects accountId token params =
     request
         { method = "GET"
         , headers = [ header "Accept" "application/json" ]
-        , url = "https://" ++ accountId ++ ".harvestapp.com/projects?access_token=" ++ token
+        , url = createUrl accountId token params
         , body = emptyBody
         , expect = expectJson projectsDecoder
         , timeout = Nothing
