@@ -18,10 +18,9 @@ import Config as Config
 -- Model
 
 
-type alias Model =
-    { hours : List DayEntry
-    , error : Maybe AppError
-    }
+type Model
+    = HoursPage (List DayEntry)
+    | ErrorPage AppError
 
 
 type AppError
@@ -50,9 +49,7 @@ init location =
                     )
                 |> Task.andThen identity
     in
-        ( { hours = []
-          , error = Nothing
-          }
+        ( HoursPage []
         , Task.attempt handleLoadedHours loadHoursForCurrentYear
         )
 
@@ -109,10 +106,10 @@ update msg model =
             ( model, Cmd.none )
 
         Hours hours ->
-            ( { model | hours = hours, error = Nothing }, Cmd.none )
+            ( HoursPage hours, Cmd.none )
 
         Failed err ->
-            ( { model | error = Just err }, Cmd.none )
+            ( ErrorPage err, Cmd.none )
 
 
 
@@ -122,8 +119,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ style [ ( "margin", "1rem" ) ] ]
-        (case model.error of
-            Just appError ->
+        (case model of
+            ErrorPage appError ->
                 case appError of
                     NoToken harvestAuthUrl ->
                         [ div [] [ a [ href harvestAuthUrl ] [ text "Login with Harvest" ] ] ]
@@ -131,13 +128,13 @@ view model =
                     HttpError err ->
                         [ div [] [ text ("Network Error" ++ toString err) ] ]
 
-            Nothing ->
+            HoursPage hours ->
                 let
                     weekEntries =
-                        groupByCalendarWeek model.hours
+                        groupByCalendarWeek hours
 
                     overtimeInHours =
-                        overtimeHours weekEntries (overtimeWorked model.hours)
+                        overtimeHours weekEntries (overtimeWorked hours)
                 in
                     [ h3 [] [ text ("2016 Overtime " ++ toString overtimeInHours ++ "h " ++ toString (overtimeInHours / 8.0) ++ "d") ]
                     , ul [] (List.map renderWeek weekEntries)
