@@ -159,7 +159,7 @@ renderWeek weekEntry =
 groupByCalendarWeek : List DayEntry -> List WeekEntry
 groupByCalendarWeek hours =
     List.indexedMap
-        (\i ds -> WeekEntry (i + 1) (totalHours ds) (totalHours ds - 40))
+        (\i ds -> WeekEntry (i + 1) (totalHours ds) (totalHours ds - Config.capacity))
         (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
 
 

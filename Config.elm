@@ -16,10 +16,6 @@ account =
     "comsysto"
 
 
-
-{- not used yet -}
-
-
 capacity : Float
 capacity =
     40
