@@ -1,4 +1,4 @@
-module Harvest.Api exposing (checkAccessTokenAvailable, authUrl, getUserInfo, getDailyHoursForDateRange)
+module Harvest.Api exposing (checkAccessTokenAvailable, authUrl, getDailyHoursForDateRange)
 
 import Dict
 import Harvest.Decoder exposing (..)
@@ -23,26 +23,8 @@ getDailyHoursForDateRange accountId userId from to token =
         }
 
 
-getUserInfo : String -> String -> Request WhoAmI
-getUserInfo accountId token =
-    request
-        { method = "GET"
-        , headers = [ header "Accept" "application/json" ]
-        , url = urlWhoAmI accountId token
-        , body = emptyBody
-        , expect = expectJson whoAmI
-        , timeout = Nothing
-        , withCredentials = False
-        }
-
-
 
 -- Harvest URLs
-
-
-urlWhoAmI : String -> String -> String
-urlWhoAmI accountId token =
-    "https://" ++ accountId ++ ".harvestapp.com/account/who_am_i?access_token=" ++ token
 
 
 urlDailyHours : String -> String -> String -> String -> String -> String
