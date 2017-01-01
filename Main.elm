@@ -1,13 +1,10 @@
 module Main exposing (..)
 
---import Harvest.Project exposing (..)
---import Html.Events exposing (..)
-
 import Date exposing (Date)
 import Date.Extra
-import Harvest.Api exposing (..)
-import Harvest.Types exposing (..)
+import Harvest.Auth exposing (..)
 import Harvest.WhoAmI exposing (getUserInfo)
+import Harvest.TimeReporting exposing (DayEntry, getEntriesByUserForDateRange)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -17,6 +14,7 @@ import Task
 import Time
 import Time.DateTime as DateTime
 import Config as Config
+import Dict
 
 
 -- Model
@@ -83,12 +81,13 @@ getHoursForCurrentYear token userId time =
                 |> sundayOfTheLastWeek
                 |> Date.Extra.toFormattedString "yyyyMMdd"
     in
-        getDailyHoursForDateRange
+        getEntriesByUserForDateRange
             Config.account
             (toString userId)
             from
             to
             token
+            Dict.empty
             |> Http.toTask
             |> Task.mapError HttpError
 
@@ -101,13 +100,6 @@ type Msg
     = LocationChange Location
     | Hours (List DayEntry)
     | Failed AppError
-
-
-
-{-
-   | GotProject (Result Http.Error String)
-   | CreateProject
--}
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -124,26 +116,6 @@ update msg model =
 
 
 
-{-
-           GotProject (Ok newUrl) ->
-               ( model, Cmd.none )
-
-           GotProject (Err _) ->
-               ( model, Cmd.none )
-
-           CreateProject ->
-               ( model, deleteTestProject )
-
-
-   createTestProject : Cmd Msg
-   createTestProject =
-       Http.send GotProject (createProject Config.account Config.token (SimpleProject 233593 "Dummy Project" True))
-
-
-   deleteTestProject : Cmd Msg
-   deleteTestProject =
-       Http.send GotProject (deleteProject Config.account 12641144 Config.token)
--}
 -- View
 
 
@@ -169,7 +141,6 @@ view model =
                 in
                     [ h3 [] [ text ("2016 Overtime " ++ toString overtimeInHours ++ "h " ++ toString (overtimeInHours / 8.0) ++ "d") ]
                     , ul [] (List.map renderWeek weekEntries)
-                      -- , button [ onClick CreateProject ] [ text "Delete Project" ]
                     ]
         )
 
