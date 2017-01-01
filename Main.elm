@@ -4,7 +4,7 @@ import Date exposing (Date)
 import Date.Extra
 import Harvest.Auth exposing (..)
 import Harvest.WhoAmI exposing (getUserInfo)
-import Harvest.TimeReporting exposing (DayEntry, getEntriesByUserForDateRange)
+import Harvest.ReportingAPI exposing (DayEntry, getEntriesByUserForDateRange)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http

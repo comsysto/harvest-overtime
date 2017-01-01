@@ -1,4 +1,4 @@
-module Harvest.Project
+module Harvest.ProjectAPI
     exposing
         ( Project
         , SimpleProject
