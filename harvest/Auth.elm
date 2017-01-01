@@ -1,44 +1,11 @@
-module Harvest.Api exposing (checkAccessTokenAvailable, authUrl, getDailyHoursForDateRange)
+module Harvest.Auth exposing (checkAccessTokenAvailable, authUrl)
 
 import Dict
-import Harvest.Decoder exposing (..)
-import Harvest.Types exposing (..)
 import Http exposing (..)
 import Task
 
 
--- Timesheets
-
-
-getDailyHoursForDateRange : String -> String -> String -> String -> String -> Request (List DayEntry)
-getDailyHoursForDateRange accountId userId from to token =
-    request
-        { method = "GET"
-        , headers = [ header "Accept" "application/json" ]
-        , url = urlDailyHours accountId userId from to token
-        , body = emptyBody
-        , expect = expectJson hours
-        , timeout = Nothing
-        , withCredentials = False
-        }
-
-
-
 -- Harvest URLs
-
-
-urlDailyHours : String -> String -> String -> String -> String -> String
-urlDailyHours accountId userId from to token =
-    "https://"
-        ++ accountId
-        ++ ".harvestapp.com/people/"
-        ++ userId
-        ++ "/entries?from="
-        ++ from
-        ++ "&to="
-        ++ to
-        ++ "&access_token="
-        ++ token
 
 
 authUrl : String -> String -> String -> String
@@ -63,6 +30,10 @@ checkAccessTokenAvailable urlHashToParse authenticationUrl =
 
         Nothing ->
             Task.fail authenticationUrl
+
+
+
+{- Helpers -}
 
 
 parseUrlParams : String -> Dict.Dict String String
