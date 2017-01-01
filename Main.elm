@@ -1,5 +1,8 @@
 module Main exposing (..)
 
+--import Harvest.Project exposing (..)
+--import Html.Events exposing (..)
+
 import Date exposing (Date)
 import Date.Extra
 import Harvest.Api exposing (..)
@@ -99,6 +102,13 @@ type Msg
     | Failed AppError
 
 
+
+{-
+   | GotProject (Result Http.Error String)
+   | CreateProject
+-}
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -113,6 +123,26 @@ update msg model =
 
 
 
+{-
+           GotProject (Ok newUrl) ->
+               ( model, Cmd.none )
+
+           GotProject (Err _) ->
+               ( model, Cmd.none )
+
+           CreateProject ->
+               ( model, deleteTestProject )
+
+
+   createTestProject : Cmd Msg
+   createTestProject =
+       Http.send GotProject (createProject Config.account Config.token (SimpleProject 233593 "Dummy Project" True))
+
+
+   deleteTestProject : Cmd Msg
+   deleteTestProject =
+       Http.send GotProject (deleteProject Config.account 12641144 Config.token)
+-}
 -- View
 
 
@@ -138,6 +168,7 @@ view model =
                 in
                     [ h3 [] [ text ("2016 Overtime " ++ toString overtimeInHours ++ "h " ++ toString (overtimeInHours / 8.0) ++ "d") ]
                     , ul [] (List.map renderWeek weekEntries)
+                      -- , button [ onClick CreateProject ] [ text "Delete Project" ]
                     ]
         )
 
