@@ -7,6 +7,7 @@ import Date exposing (Date)
 import Date.Extra
 import Harvest.Api exposing (..)
 import Harvest.Types exposing (..)
+import Harvest.WhoAmI exposing (getUserInfo)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
