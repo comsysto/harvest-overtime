@@ -3,7 +3,7 @@ module Config exposing (..)
 
 redirectUrl : String
 redirectUrl =
-    "http://localhost:8000/Main.elm"
+    "http://localhost:8000/index.html"
 
 
 clientId : String

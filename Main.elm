@@ -121,7 +121,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ style [ ( "margin", "1rem" ) ] ]
+    div [ class "ma3 sans-serif" ]
         (case model of
             ErrorPage appError ->
                 case appError of
@@ -139,14 +139,15 @@ view model =
                     overtimeInHours =
                         overtimeHours weekEntries (overtimeWorked hours)
                 in
-                    [ h3 [] [ text ("2016 Overtime " ++ toString overtimeInHours ++ "h " ++ toString (overtimeInHours / 8.0) ++ "d") ]
-                    , ul [] (List.map renderWeek weekEntries)
+                    [ h1 [ class "f2 lh-title tc" ] [ text "Harvest Overtime Calculator" ]
+                    , div [class "f1 ma2 pa3 bg-light-gray tc shadow-1"] [ text (toString overtimeInHours ++ "h ") ]
                     ]
+                        ++ List.map renderWeek weekEntries
         )
 
 
 type alias WeekEntry =
-    { number : Int, hours : Float, overtime : Float }
+    { number : Int, overtime : Float }
 
 
 overtimeHours : List WeekEntry -> Float -> Float
@@ -157,16 +158,19 @@ overtimeHours weekEntries overtimeWorked =
 renderWeek : WeekEntry -> Html msg
 renderWeek weekEntry =
     let
-        { number, hours, overtime } =
+        { number, overtime } =
             weekEntry
     in
-        li [] [ "Week " ++ toString number ++ ": " ++ toString hours ++ "h " ++ "Overtime:" ++ toString overtime ++ "h" |> text ]
+        div [ class "fl w-10 pa2 shadow-1 ma2 grow tc" ]
+            [ div [ class "f5" ] [ "Week " ++ toString number |> text ]
+            , div [ class "f3" ] [ toString overtime ++ "h" |> text ]
+            ]
 
 
 groupByCalendarWeek : List DayEntry -> List WeekEntry
 groupByCalendarWeek hours =
     List.indexedMap
-        (\i ds -> WeekEntry (i + 1) (totalHours ds) (totalHours ds - Config.capacity))
+        (\i ds -> WeekEntry (i + 1) (totalHours ds - Config.capacity))
         (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
 
 
