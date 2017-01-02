@@ -199,7 +199,7 @@ mondayOfTheFirstWeek : Int -> Date
 mondayOfTheFirstWeek yr =
     let
         d =
-            Date.Extra.fromCalendarDate yr Date.Jan 1
+            Date.Extra.fromCalendarDate (yr - 1) Date.Jan 1
     in
         if Date.Extra.weekNumber d /= 1 then
             Date.Extra.add Date.Extra.Day (8 - Date.Extra.weekdayNumber d) d
@@ -211,7 +211,7 @@ sundayOfTheLastWeek : Int -> Date
 sundayOfTheLastWeek yr =
     let
         d =
-            Date.Extra.fromCalendarDate (yr + 1) Date.Jan 1
+            Date.Extra.fromCalendarDate yr Date.Jan 1
     in
         if Date.Extra.weekNumber d /= 1 then
             Date.Extra.add Date.Extra.Day (7 - Date.Extra.weekdayNumber d) d
