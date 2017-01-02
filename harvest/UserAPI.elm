@@ -10,6 +10,14 @@ module Harvest.UserAPI
         , toggleUser
         , usersDecoder
         , userDecoder
+        , Assignment
+        , assignmentsDecoder
+        , assignmentDecoder
+        , getUsersAssignedToProject
+        , getUserAssignment
+        , assignUserToAProject
+        , removeUserFromProject
+        , updateAssignment
         )
 
 import Date exposing (Date)
@@ -65,6 +73,20 @@ type alias SimpleUser =
     }
 
 
+type alias Assignment =
+    { id : Int
+    , userId : Int
+    , projectId : Int
+    , isProjectManager : Bool
+    , deactivated : Bool
+    , hourlyRate : Float
+    , budget : Maybe Float
+    , estimate : Maybe Float
+    , createdAt : Date
+    , updatedAt : Date
+    }
+
+
 usersDecoder : Decoder (List User)
 usersDecoder =
     list (field "user" userDecoder)
@@ -92,6 +114,26 @@ userDecoder =
         |> optional "weekly_capacity" int 0
         |> required "created_at" (nullable date)
         |> required "updated_at" (nullable date)
+
+
+assignmentsDecoder : Decoder (List Assignment)
+assignmentsDecoder =
+    list (field "user_assignment" assignmentDecoder)
+
+
+assignmentDecoder : Decoder Assignment
+assignmentDecoder =
+    decode Assignment
+        |> required "id" int
+        |> required "user_id" int
+        |> required "project_id" int
+        |> required "is_project_manager" bool
+        |> required "deactivated" bool
+        |> required "hourly_rate" float
+        |> required "budget" (nullable float)
+        |> required "estimate" (nullable float)
+        |> required "created_at" date
+        |> required "updated_at" date
 
 
 allUsers : String -> String -> Dict String String -> Request (List User)
@@ -177,7 +219,109 @@ toggleUser accountId userId token =
 
 
 
+{- User Assignments -}
+
+
+getUsersAssignedToProject : String -> Int -> String -> Dict String String -> Request (List Assignment)
+getUsersAssignedToProject accountId projectId token params =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url = assignmentUrl accountId projectId token params
+        , body = emptyBody
+        , expect = expectJson assignmentsDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+getUserAssignment : String -> Int -> Int -> String -> Request Assignment
+getUserAssignment accountId projectId assignmentId token =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString projectId) ++ "user_assignments/" ++ (toString assignmentId) ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectJson assignmentDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+assignUserToAProject : String -> Int -> Int -> String -> Request String
+assignUserToAProject accountId userId projectId token =
+    request
+        { method = "POST"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString projectId) ++ "/user_assignments?access_token=" ++ token
+        , body = jsonBody <| encodeUserAssignment userId
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- https://YOURACCOUNT.harvestapp.com/projects/{PROJECT_ID}/user_assignments/{USER_ASSIGNMENT_ID}
+
+
+removeUserFromProject : String -> Int -> Int -> String -> Request String
+removeUserFromProject accountId projectId assignmentId token =
+    request
+        { method = "DELETE"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString projectId) ++ "/user_assignments/" ++ (toString assignmentId) ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- PUT https://YOURACCOUNT.harvestapp.com/projects/{PROJECT_ID}/user_assignments/{USER_ASSIGNMENT_ID}
+
+
+updateAssignment : String -> Assignment -> String -> Request String
+updateAssignment accountId assignment token =
+    request
+        { method = "PUT"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString assignment.projectId) ++ "/user_assignments/" ++ (toString assignment.id) ++ "?access_token=" ++ token
+        , body = jsonBody <| encodeAssignment assignment
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
 {- Helpers -}
+
+
+encodeAssignment : Assignment -> JE.Value
+encodeAssignment assignment =
+    JE.object
+        [ ( "user"
+          , JE.object
+                [ ( "user_id", JE.int assignment.userId )
+                , ( "project_id", JE.int assignment.projectId )
+                , ( "is_project_manager", JE.bool assignment.isProjectManager )
+                , ( "deactivated", JE.bool assignment.deactivated )
+                , ( "hourly_rate", JE.float assignment.hourlyRate )
+                ]
+          )
+        ]
+
+
+encodeUserAssignment : Int -> JE.Value
+encodeUserAssignment userId =
+    JE.object
+        [ ( "user"
+          , JE.object
+                [ ( "id", JE.int userId ) ]
+          )
+        ]
 
 
 encodeUser : User -> JE.Value
@@ -223,6 +367,18 @@ encodeSimpleUser u =
                 ]
           )
         ]
+
+
+assignmentUrl : String -> Int -> String -> Dict String String -> String
+assignmentUrl accountId projectId token params =
+    let
+        url =
+            "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString projectId) ++ "/user_assignments?access_token=" ++ token
+
+        p =
+            Dict.foldl (\key val agg -> agg ++ "&" ++ key ++ "=" ++ val) "" params
+    in
+        url ++ p
 
 
 createUrl : String -> String -> Dict String String -> String
