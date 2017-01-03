@@ -36,20 +36,20 @@ init location =
         authenticationUrl =
             authUrl Config.account Config.clientId Config.redirectUrl
 
+        getToken =
+            Task.mapError NoToken (checkAccessTokenAvailable location.hash authenticationUrl)
+
+        getYear =
+            Time.now |> Task.andThen (\time -> Task.succeed (DateTime.fromTimestamp time |> DateTime.year))
+
         getUserId token =
             Task.mapError HttpError
                 (getUserInfo Config.account token |> Http.toTask)
                 |> Task.andThen (\who -> Task.succeed who.user.id)
 
         loadHoursForCurrentYear =
-            Task.mapError NoToken (checkAccessTokenAvailable location.hash authenticationUrl)
-                |> Task.andThen
-                    (\token ->
-                        Task.map2
-                            (getHoursForCurrentYear token)
-                            (getUserId token)
-                            Time.now
-                    )
+            getToken
+                |> Task.andThen (\token -> Task.map2 (getHoursForCurrentYear token) (getUserId token) getYear)
                 |> Task.andThen identity
     in
         ( HoursPage []
@@ -67,20 +67,14 @@ handleLoadedHours loadedHours =
             Failed err
 
 
-getHoursForCurrentYear : String -> Int -> Time.Time -> Task.Task AppError (List DayEntry)
-getHoursForCurrentYear token userId time =
+getHoursForCurrentYear : String -> Int -> Int -> Task.Task AppError (List DayEntry)
+getHoursForCurrentYear token userId year =
     let
         from =
-            DateTime.fromTimestamp time
-                |> DateTime.year
-                |> mondayOfTheFirstWeek
-                |> Date.Extra.toFormattedString "yyyyMMdd"
+            year |> mondayOfTheFirstWeek |> Date.Extra.toFormattedString "yyyyMMdd"
 
         to =
-            DateTime.fromTimestamp time
-                |> DateTime.year
-                |> sundayOfTheLastWeek
-                |> Date.Extra.toFormattedString "yyyyMMdd"
+            year |> sundayOfTheLastWeek |> Date.Extra.toFormattedString "yyyyMMdd"
     in
         getEntriesByUserForDateRange
             Config.account
