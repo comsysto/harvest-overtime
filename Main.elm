@@ -36,18 +36,19 @@ init location =
         authenticationUrl =
             authUrl Config.account Config.clientId Config.redirectUrl
 
+        getUserId token =
+            Task.mapError HttpError
+                (getUserInfo Config.account token |> Http.toTask)
+                |> Task.andThen (\who -> Task.succeed who.user.id)
+
         loadHoursForCurrentYear =
             Task.mapError NoToken (checkAccessTokenAvailable location.hash authenticationUrl)
                 |> Task.andThen
                     (\token ->
-                        Task.mapError HttpError (getUserInfo Config.account token |> Http.toTask)
-                            |> Task.andThen
-                                (\who ->
-                                    Task.map2
-                                        (getHoursForCurrentYear token)
-                                        (Task.succeed who.user.id)
-                                        Time.now
-                                )
+                        Task.map2
+                            (getHoursForCurrentYear token)
+                            (getUserId token)
+                            Time.now
                     )
                 |> Task.andThen identity
     in
@@ -140,7 +141,7 @@ view model =
                         overtimeHours weekEntries (overtimeWorked hours)
                 in
                     [ h1 [ class "f2 lh-title tc" ] [ text "Harvest Overtime Calculator" ]
-                    , div [class "f1 ma2 pa3 bg-light-gray tc shadow-1"] [ text (toString overtimeInHours ++ "h ") ]
+                    , div [ class "f1 ma2 pa3 bg-light-gray tc shadow-1" ] [ text (toString overtimeInHours ++ "h ") ]
                     ]
                         ++ List.map renderWeek weekEntries
         )
