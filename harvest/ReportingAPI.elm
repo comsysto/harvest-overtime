@@ -35,41 +35,41 @@ import Http exposing (..)
 
 type alias DayEntry =
     { id : Int
-    , notes : Maybe String
-    , spentAt : Date
-    , hours : Float
     , userId : Int
     , projectId : Int
     , taskId : Int
-    , createdAt : String
-    , updatedAt : String
+    , notes : Maybe String
+    , spentAt : Date
+    , hours : Float
     , adjustmentRecord : Bool
     , timerStartedAt : Maybe String
     , isClosed : Bool
     , isBilled : Bool
     , hoursWithTimer : Float
+    , createdAt : Date
+    , updatedAt : Date
     }
 
 
 type alias Expense =
     { id : Int
+    , userId : Int
+    , projectId : Int
+    , invoiceId : Int
+    , companyId : Int
     , totalCost : Float
     , units : Float
-    , createdAt : Date
-    , updatedAt : Date
-    , projectId : Int
     , expenseCategoryId : Int
-    , userId : Int
     , spentAt : Date
     , isClosed : Bool
     , notes : Maybe String
-    , invoiceId : Int
     , billable : Bool
-    , companyId : Int
     , hasReceipt : Bool
     , receiptUrl : Maybe String
     , isLocked : Bool
     , locked_reason : Maybe String
+    , createdAt : Date
+    , updatedAt : Date
     }
 
 
@@ -145,19 +145,19 @@ dayEntry : Decoder DayEntry
 dayEntry =
     decode DayEntry
         |> required "id" int
-        |> required "notes" (nullable string)
-        |> required "spent_at" date
-        |> required "hours" float
         |> required "user_id" int
         |> required "project_id" int
         |> required "task_id" int
-        |> required "created_at" string
-        |> required "updated_at" string
+        |> required "notes" (nullable string)
+        |> required "spent_at" date
+        |> required "hours" float
         |> required "adjustment_record" bool
         |> required "timer_started_at" (nullable string)
         |> required "is_closed" bool
         |> required "is_billed" bool
         |> optional "hours_with_timer" float 0
+        |> required "created_at" date
+        |> required "updated_at" date
 
 
 hours : Decoder (List DayEntry)
@@ -174,23 +174,23 @@ expense : Decoder Expense
 expense =
     decode Expense
         |> required "id" int
+        |> required "user_id" int
+        |> required "project_id" int
+        |> required "invoice_id" int
+        |> required "company_id" int
         |> required "total_cost" float
         |> required "units" float
-        |> required "created_at" date
-        |> required "updated_at" date
-        |> required "project_id" int
         |> required "expense_category_id" int
-        |> required "user_id" int
         |> required "spent_at" date
         |> required "is_closed" bool
         |> required "notes" (nullable string)
-        |> required "invoice_id" int
         |> required "billable" bool
-        |> required "company_id" int
         |> required "has_receipt" bool
         |> required "receiptUrl" (nullable string)
         |> required "is_locked" bool
         |> required "locked_reason" (nullable string)
+        |> required "created_at" date
+        |> required "updated_at" date
 
 
 
