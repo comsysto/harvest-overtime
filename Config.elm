@@ -21,9 +21,9 @@ capacity =
     40
 
 
-overtimeTaskId : String
+overtimeTaskId : Int
 overtimeTaskId =
-    "2842526"
+    2842526
 
 
 
