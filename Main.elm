@@ -7,6 +7,7 @@ import Harvest.WhoAmI exposing (getUserInfo)
 import Harvest.ReportingAPI exposing (DayEntry, getEntriesByUserForDateRange)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Http
 import List.Extra
 import Navigation exposing (Location)
@@ -20,9 +21,8 @@ import Dict
 -- Model
 
 
-type Model
-    = HoursPage (List DayEntry)
-    | ErrorPage AppError
+type alias Model =
+    { error : Maybe AppError, token : Result String String, hours : List DayEntry, year : Int, selectedYear : Int }
 
 
 type AppError
@@ -32,43 +32,83 @@ type AppError
 
 init : Location -> ( Model, Cmd Msg )
 init location =
-    let
-        authenticationUrl =
-            authUrl Config.account Config.clientId Config.redirectUrl
+    ( { error = Nothing
+      , token = checkAccessTokenAvailable location.hash authenticationUrl
+      , hours = []
+      , year = 0
+      , selectedYear = 0
+      }
+    , Task.perform CurrentYear getYear
+    )
 
-        getToken =
-            Task.mapError NoToken (checkAccessTokenAvailable location.hash authenticationUrl)
 
-        getYear =
-            Time.now |> Task.andThen (\time -> Task.succeed (DateTime.fromTimestamp time |> DateTime.year))
+getYear : Task.Task x Int
+getYear =
+    Time.now |> Task.andThen (\time -> Task.succeed (DateTime.fromTimestamp time |> DateTime.year))
 
-        getUserId token =
-            Task.mapError HttpError
-                (getUserInfo Config.account token |> Http.toTask)
-                |> Task.andThen (\who -> Task.succeed who.user.id)
 
-        loadHoursForCurrentYear =
-            getToken
-                |> Task.andThen (\token -> Task.map2 (getHoursForCurrentYear token) (getUserId token) getYear)
-                |> Task.andThen identity
-    in
-        ( HoursPage []
-        , Task.attempt handleLoadedHours loadHoursForCurrentYear
+authenticationUrl : String
+authenticationUrl =
+    authUrl Config.account Config.clientId Config.redirectUrl
+
+
+
+-- Update
+
+
+type Msg
+    = LocationChange Location
+    | GetHours (List DayEntry)
+    | LoadHours Int
+    | CurrentYear Int
+    | Failed AppError
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        LocationChange _ ->
+            ( model, Cmd.none )
+
+        CurrentYear year ->
+            ( { model | year = year, selectedYear = year }, updateHoursWithToken model.token year )
+
+        LoadHours year ->
+            ( { model | selectedYear = year }, updateHoursWithToken model.token year )
+
+        GetHours hours ->
+            ( { model | hours = hours }, Cmd.none )
+
+        Failed err ->
+            ( { model | error = Just err }, Cmd.none )
+
+
+updateHoursWithToken : Result String String -> Int -> Cmd Msg
+updateHoursWithToken tokenResult year =
+    case tokenResult of
+        Ok token ->
+            updateHoursForYear token year
+
+        Err authUrl ->
+            Task.perform Failed (Task.succeed (NoToken authUrl))
+
+
+updateHoursForYear : String -> Int -> Cmd Msg
+updateHoursForYear token year =
+    Task.attempt
+        (\res ->
+            case res of
+                Ok res ->
+                    GetHours res
+
+                Err err ->
+                    Failed err
         )
+        (getUserId token |> Task.andThen (getHoursForEveryCalendarweekInAYear token year))
 
 
-handleLoadedHours : Result AppError (List DayEntry) -> Msg
-handleLoadedHours loadedHours =
-    case loadedHours of
-        Ok res ->
-            Hours res
-
-        Err err ->
-            Failed err
-
-
-getHoursForCurrentYear : String -> Int -> Int -> Task.Task AppError (List DayEntry)
-getHoursForCurrentYear token userId year =
+getHoursForEveryCalendarweekInAYear : String -> Int -> Int -> Task.Task AppError (List DayEntry)
+getHoursForEveryCalendarweekInAYear token year userId =
     let
         from =
             year |> mondayOfTheFirstWeek |> Date.Extra.toFormattedString "yyyyMMdd"
@@ -87,27 +127,10 @@ getHoursForCurrentYear token userId year =
             |> Task.mapError HttpError
 
 
-
--- Update
-
-
-type Msg
-    = LocationChange Location
-    | Hours (List DayEntry)
-    | Failed AppError
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        LocationChange _ ->
-            ( model, Cmd.none )
-
-        Hours hours ->
-            ( HoursPage hours, Cmd.none )
-
-        Failed err ->
-            ( ErrorPage err, Cmd.none )
+getUserId : String -> Task.Task AppError Int
+getUserId token =
+    Task.mapError HttpError (getUserInfo Config.account token |> Http.toTask)
+        |> Task.andThen (\who -> Task.succeed who.user.id)
 
 
 
@@ -117,8 +140,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "ma3 sans-serif" ]
-        (case model of
-            ErrorPage appError ->
+        (case model.error of
+            Just appError ->
                 case appError of
                     NoToken harvestAuthUrl ->
                         [ div [] [ a [ href harvestAuthUrl ] [ text "Login with Harvest" ] ] ]
@@ -126,15 +149,16 @@ view model =
                     HttpError err ->
                         [ div [] [ text ("Network Error" ++ toString err) ] ]
 
-            HoursPage hours ->
+            Nothing ->
                 let
                     weekEntries =
-                        groupByCalendarWeek hours
+                        groupByCalendarWeek model.hours
 
                     overtimeInHours =
-                        overtimeHours weekEntries (overtimeWorked hours)
+                        overtimeHours weekEntries (overtimeWorked model.hours)
                 in
                     [ h1 [ class "f2 lh-title tc" ] [ text "Harvest Overtime Calculator" ]
+                    , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
                     , div [ class "f1 ma2 pa3 bg-light-gray tc shadow-1" ] [ text (toString overtimeInHours ++ "h ") ]
                     ]
                         ++ List.map renderWeek weekEntries
@@ -143,6 +167,22 @@ view model =
 
 type alias WeekEntry =
     { number : Int, overtime : Float }
+
+
+renderYearButton : Int -> Int -> Html Msg
+renderYearButton selectedYear year =
+    button
+        [ onClick (LoadHours year)
+        , class
+            ("pa3 ma2 br2 shadow-1 pointer"
+                ++ if year == selectedYear then
+                    " bg-light-gray"
+                   else
+                    ""
+            )
+        , type_ "button"
+        ]
+        [ year |> toString |> text ]
 
 
 overtimeHours : List WeekEntry -> Float -> Float
@@ -198,7 +238,7 @@ mondayOfTheFirstWeek : Int -> Date
 mondayOfTheFirstWeek yr =
     let
         d =
-            Date.Extra.fromCalendarDate (yr - 1) Date.Jan 1
+            Date.Extra.fromCalendarDate yr Date.Jan 1
     in
         if Date.Extra.weekNumber d /= 1 then
             Date.Extra.add Date.Extra.Day (8 - Date.Extra.weekdayNumber d) d
@@ -210,7 +250,7 @@ sundayOfTheLastWeek : Int -> Date
 sundayOfTheLastWeek yr =
     let
         d =
-            Date.Extra.fromCalendarDate yr Date.Jan 1
+            Date.Extra.fromCalendarDate (yr + 1) Date.Jan 1
     in
         if Date.Extra.weekNumber d /= 1 then
             Date.Extra.add Date.Extra.Day (7 - Date.Extra.weekdayNumber d) d

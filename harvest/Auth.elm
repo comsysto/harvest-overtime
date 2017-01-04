@@ -2,7 +2,6 @@ module Harvest.Auth exposing (checkAccessTokenAvailable, authUrl)
 
 import Dict
 import Http exposing (..)
-import Task
 
 
 -- Harvest URLs
@@ -22,14 +21,14 @@ authUrl accountId clientId redirectUrl =
 -- Token
 
 
-checkAccessTokenAvailable : String -> String -> Task.Task String String
+checkAccessTokenAvailable : String -> String -> Result String String
 checkAccessTokenAvailable urlHashToParse authenticationUrl =
     case Dict.get "access_token" (parseUrlParams urlHashToParse) of
         Just a ->
-            Task.succeed a
+            Ok a
 
         Nothing ->
-            Task.fail authenticationUrl
+            Err authenticationUrl
 
 
 
