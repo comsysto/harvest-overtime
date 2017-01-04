@@ -252,7 +252,7 @@ assignUserToAProject : String -> Int -> Int -> String -> Request String
 assignUserToAProject accountId userId projectId token =
     request
         { method = "POST"
-        , headers = [ header "Accept" "application/json" ]
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
         , url = "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString projectId) ++ "/user_assignments?access_token=" ++ token
         , body = jsonBody <| encodeUserAssignment userId
         , expect = expectString
