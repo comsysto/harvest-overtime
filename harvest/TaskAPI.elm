@@ -229,7 +229,7 @@ assignTaskToAProject : String -> Int -> Int -> String -> Request String
 assignTaskToAProject accountId taskId projectId token =
     request
         { method = "POST"
-        , headers = [ header "Accept" "application/json" ]
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
         , url = "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString projectId) ++ "/task_assignments?access_token=" ++ token
         , body = jsonBody <| encodeTaskAssignmentId taskId
         , expect = expectString
@@ -246,7 +246,7 @@ createNewTaskAndAssignItToProject : String -> Int -> String -> String -> Request
 createNewTaskAndAssignItToProject accountId projectId taskName token =
     request
         { method = "POST"
-        , headers = [ header "Accept" "application/json" ]
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
         , url = "https://" ++ accountId ++ ".harvestapp.com/projects/" ++ (toString projectId) ++ "/task_assignments/add_with_create_new_task?access_token=" ++ token
         , body = jsonBody <| encodeTaskName taskName
         , expect = expectString

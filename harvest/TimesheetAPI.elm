@@ -204,7 +204,7 @@ updateEntry : String -> DayEntry -> String -> Request String
 updateEntry accountId entry token =
     request
         { method = "POST"
-        , headers = [ header "Accept" "application/json" ]
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
         , url = "https://" ++ accountId ++ ".harvestapp.com/daily/update/" ++ (toString entry.id) ++ "?access_token=" ++ token
         , body = jsonBody <| encodeDayEntry entry
         , expect = expectString
