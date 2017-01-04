@@ -166,7 +166,7 @@ view model =
 
 
 type alias WeekEntry =
-    { number : Int, overtime : Float }
+    { number : Int, overtime : Float, compensation : Float }
 
 
 renderYearButton : Int -> Int -> Html Msg
@@ -193,25 +193,41 @@ overtimeHours weekEntries overtimeWorked =
 renderWeek : WeekEntry -> Html msg
 renderWeek weekEntry =
     let
-        { number, overtime } =
+        { number, overtime, compensation } =
             weekEntry
     in
         div [ class "fl w-10 pa2 shadow-1 ma2 grow tc" ]
             [ div [ class "f5" ] [ "Week " ++ toString number |> text ]
-            , div [ class "f3" ] [ toString overtime ++ "h" |> text ]
+            , div [ class "f3" ]
+                ([ span [] [ toString overtime ++ "h" |> text ]
+                 , span [ class "red" ]
+                    [ (if compensation > 0 then
+                        " -" ++ (compensation |> toString) ++ "h"
+                       else
+                        ""
+                      )
+                        |> text
+                    ]
+                 ]
+                )
             ]
 
 
 groupByCalendarWeek : List DayEntry -> List WeekEntry
 groupByCalendarWeek hours =
     List.indexedMap
-        (\i ds -> WeekEntry (i + 1) (totalHours ds - Config.capacity))
+        (\i ds -> WeekEntry (i + 1) (totalHours ds - Config.capacity) (totalOvertimeCompensation ds))
         (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
+
+
+totalOvertimeCompensation : List DayEntry -> Float
+totalOvertimeCompensation hours =
+    (List.filter (\d -> d.taskId == Config.overtimeTaskId) hours) |> totalHours
 
 
 overtimeWorked : List DayEntry -> Float
 overtimeWorked hours =
-    List.filter (\hour -> (toString hour.taskId) == Config.overtimeTaskId) hours |> totalHours
+    List.filter (\hour -> hour.taskId == Config.overtimeTaskId) hours |> totalHours
 
 
 totalHours : List DayEntry -> Float
