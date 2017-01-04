@@ -211,7 +211,7 @@ groupByCalendarWeek hours =
 
 overtimeWorked : List DayEntry -> Float
 overtimeWorked hours =
-    List.filter (\hour -> (toString hour.taskId) == overtimeTaskId) hours |> totalHours
+    List.filter (\hour -> (toString hour.taskId) == Config.overtimeTaskId) hours |> totalHours
 
 
 totalHours : List DayEntry -> Float
@@ -227,11 +227,6 @@ main =
         , update = update
         , subscriptions = always Sub.none
         }
-
-
-overtimeTaskId : String
-overtimeTaskId =
-    "2842526"
 
 
 mondayOfTheFirstWeek : Int -> Date
