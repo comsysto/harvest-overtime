@@ -4,9 +4,8 @@
   "description": "Harvest overtime calculator",
   "main": "Main.elm",
   "scripts": {
-    "prebuild": "elm-make Main.elm --output elm.js",
-    "build": "uglifyjs elm.js -c -m -o build/elm.min.js",
-    "postbuild": "rm elm.js"
+    "prebuild": "rm -rf build",
+    "build": "webpack --config bundler-config.js"
   },
   "repository": {
     "type": "git",
@@ -19,7 +18,15 @@
   },
   "homepage": "https://github.com/comsysto/harvest-overtime#readme",
   "devDependencies": {
+    "css-loader": "^0.26.1",
     "elm": "^0.18.0",
-    "uglify-js": "^2.7.5"
+    "elm-webpack-loader": "^4.1.1",
+    "extract-text-webpack-plugin": "^1.0.1",
+    "html-webpack-plugin": "^2.26.0",
+    "style-loader": "^0.13.1",
+    "webpack": "^1.14.0"
+  },
+  "dependencies": {
+    "tachyons": "^4.6.1"
   }
 }
