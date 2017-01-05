@@ -8,6 +8,11 @@ module Harvest.InvoiceAPI
         , deleteInvoice
         , updateInvoice
         , createInvoice
+        , Message
+        , messagesDecoder
+        , messageDecoder
+        , getMessagesForInvoice
+        , deleteMessage
         )
 
 import Date exposing (Date)
@@ -56,6 +61,25 @@ type alias Invoice =
     }
 
 
+type alias Message =
+    { id : Int
+    , invoiceId : Int
+    , sendMeACopy : Bool
+    , body : Maybe String
+    , sentBy : String
+    , sentByEmail : String
+    , thankYou : Bool
+    , subject : Maybe String
+    , includePayPalLink : Bool
+    , sentFomEmail : String
+    , sentFrom : String
+    , sendReminderOn : Maybe Date
+    , fullRecipientList : Maybe String
+    , createdAt : Maybe Date
+    , updatedAt : Maybe Date
+    }
+
+
 
 {- Decoders -}
 
@@ -97,6 +121,31 @@ invoiceDecoder =
         |> required "retainer_id" (nullable int)
         |> required "created_by_id" (nullable int)
         |> required "state" (nullable string)
+        |> required "created_at" (nullable date)
+        |> required "updated_at" (nullable date)
+
+
+messagesDecoder : Decoder (List Message)
+messagesDecoder =
+    list (field "message" messageDecoder)
+
+
+messageDecoder : Decoder Message
+messageDecoder =
+    decode Message
+        |> required "id" int
+        |> required "invoice_id" int
+        |> required "send_me_a_copy" bool
+        |> required "body" (nullable string)
+        |> required "sent_by" string
+        |> required "sent_by_email" string
+        |> required "thank_you" bool
+        |> required "subject" (nullable string)
+        |> required "include_pay_pal_link" bool
+        |> required "sent_from" string
+        |> required "sent_from_email" string
+        |> required "send_reminder_on" (nullable date)
+        |> required "full_recipient_list" (nullable string)
         |> required "created_at" (nullable date)
         |> required "updated_at" (nullable date)
 
@@ -180,6 +229,40 @@ createInvoice accountId token invoice =
         , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
         , url = "https://" ++ accountId ++ ".harvestapp.com/invoices?access_token=" ++ token
         , body = jsonBody <| encodeInvoice invoice
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages
+
+
+getMessagesForInvoice : String -> String -> Int -> Request (List Message)
+getMessagesForInvoice accountId token invoiceId =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString invoiceId) ++ "/messages?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectJson messagesDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/{MESSAGEID}
+
+
+deleteMessage : String -> Int -> Int -> String -> Request String
+deleteMessage accountId invoiceId messageId token =
+    request
+        { method = "DELETE"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString invoiceId) ++ "/messages/" ++ (toString messageId) ++ "?access_token=" ++ token
+        , body = emptyBody
         , expect = expectString
         , timeout = Nothing
         , withCredentials = False
