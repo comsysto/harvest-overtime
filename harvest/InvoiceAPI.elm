@@ -17,10 +17,24 @@ module Harvest.InvoiceAPI
         , markInvoiceAsSent
         , markInvoiceAsClosed
         , markInvoiceAsOpen
+        , InvoiceCategory
+        , invoiceCategoriesDecoder
+        , invoiceCategoryDecoder
+        , getInvoiceCategories
+        , createInvoiceCategory
+        , updateInvoiceCategory
+        , deleteInvoiceCategory
+        , Payment
+        , paymentsDecoder
+        , paymentDecoder
+        , getPaymentsForInvoice
+        , getPaymentForInvoice
+        , deletePayment
+        , createPayment
         )
 
 import Date exposing (Date)
-import Date.Extra exposing (toFormattedString)
+import Date.Extra exposing (toFormattedString, toUtcIsoString)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE exposing (maybe)
 import Json.Decode exposing (..)
@@ -79,6 +93,32 @@ type alias Message =
     , sentFrom : String
     , sendReminderOn : Maybe Date
     , fullRecipientList : Maybe String
+    , createdAt : Maybe Date
+    , updatedAt : Maybe Date
+    }
+
+
+type alias InvoiceCategory =
+    { id : Int
+    , name : String
+    , useAsService : Bool
+    , useAsExpense : Bool
+    , createdAt : Maybe Date
+    , updatedAt : Maybe Date
+    }
+
+
+type alias Payment =
+    { id : Int
+    , invoiceId : Int
+    , amount : Float
+    , paidAt : Date
+    , notes : Maybe String
+    , recordedBy : String
+    , recordedByEmail : String
+    , payPalTransactionId : Maybe Int
+    , authorization : Maybe String
+    , paymentGatewayId : Maybe Int
     , createdAt : Maybe Date
     , updatedAt : Maybe Date
     }
@@ -150,6 +190,44 @@ messageDecoder =
         |> required "sent_from_email" string
         |> required "send_reminder_on" (nullable date)
         |> required "full_recipient_list" (nullable string)
+        |> required "created_at" (nullable date)
+        |> required "updated_at" (nullable date)
+
+
+invoiceCategoriesDecoder : Decoder (List InvoiceCategory)
+invoiceCategoriesDecoder =
+    list (field "invoice_category" invoiceCategoryDecoder)
+
+
+invoiceCategoryDecoder : Decoder InvoiceCategory
+invoiceCategoryDecoder =
+    decode InvoiceCategory
+        |> required "id" int
+        |> required "name" string
+        |> required "use_as_service" bool
+        |> required "use_as_expense" bool
+        |> required "created_at" (nullable date)
+        |> required "updated_at" (nullable date)
+
+
+paymentsDecoder : Decoder (List Payment)
+paymentsDecoder =
+    list (field "invoice" paymentDecoder)
+
+
+paymentDecoder : Decoder Payment
+paymentDecoder =
+    decode Payment
+        |> required "id" int
+        |> required "invoice_id" int
+        |> required "amount" float
+        |> required "paid_at" date
+        |> required "notes" (nullable string)
+        |> required "recorded_by" string
+        |> required "recorded_by_email" string
+        |> required "pay_pal_transaction_id" (nullable int)
+        |> required "authorization" (nullable string)
+        |> required "payment_gateway_id" (nullable int)
         |> required "created_at" (nullable date)
         |> required "updated_at" (nullable date)
 
@@ -310,7 +388,167 @@ markInvoiceAsOpen accountId invoiceId token =
 
 
 
+-- GET https://YOURACCOUNT.harvestapp.com/invoice_item_categories
+
+
+getInvoiceCategories : String -> String -> Request (List InvoiceCategory)
+getInvoiceCategories accountId token =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoice_item_categories?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectJson invoiceCategoriesDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- POST https://YOURACCOUNT.harvestapp.com/invoice_item_categories
+
+
+createInvoiceCategory : String -> String -> InvoiceCategory -> Request String
+createInvoiceCategory accountId token invoiceCategory =
+    request
+        { method = "POST"
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoice_item_categories?access_token=" ++ token
+        , body = jsonBody <| encodeInvoiceCategory invoiceCategory
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- PUT https://YOURACCOUNT.harvestapp.com/invoice_item_categories/{CATEGORYID}
+
+
+updateInvoiceCategory : String -> String -> InvoiceCategory -> Request String
+updateInvoiceCategory accountId token invoiceCategory =
+    request
+        { method = "PUT"
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoice_item_categories/" ++ (toString invoiceCategory.id) ++ "?access_token=" ++ token
+        , body = jsonBody <| encodeInvoiceCategory invoiceCategory
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- DELETE https://YOURACCOUNT.harvestapp.com/invoice_item_categories/{CATEGORYID}
+
+
+deleteInvoiceCategory : String -> Int -> String -> Request String
+deleteInvoiceCategory accountId invoiceCategoryId token =
+    request
+        { method = "DELETE"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoice_item_categories/" ++ (toString invoiceCategoryId) ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments
+
+
+getPaymentsForInvoice : String -> Int -> String -> Request (List Payment)
+getPaymentsForInvoice accountId invoiceId token =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString invoiceId) ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectJson paymentsDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments/{PAYMENTID}
+
+
+getPaymentForInvoice : String -> Int -> Int -> String -> Request Payment
+getPaymentForInvoice accountId invoiceId paymentId token =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString invoiceId) ++ "/payments/" ++ (toString paymentId) ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectJson paymentDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments/{PAYMENTID}
+
+
+deletePayment : String -> Int -> Int -> String -> Request String
+deletePayment accountId invoiceId paymentId token =
+    request
+        { method = "DELETE"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString invoiceId) ++ "/payments" ++ (toString paymentId) ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
+-- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments
+
+
+createPayment : String -> String -> Payment -> Request String
+createPayment accountId token payment =
+    request
+        { method = "POST"
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString payment.invoiceId) ++ "/payments?access_token=" ++ token
+        , body = jsonBody <| encodePayment payment
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+
 {- Helpers -}
+
+
+encodePayment : Payment -> JE.Value
+encodePayment c =
+    JE.object
+        [ ( "payment"
+          , JE.object
+                [ ( "paid_at", JE.string (toUtcIsoString c.paidAt) )
+                , ( "amount", JE.float c.amount )
+                , ( "notes", JEE.maybe JE.string c.notes )
+                ]
+          )
+        ]
+
+
+encodeInvoiceCategory : InvoiceCategory -> JE.Value
+encodeInvoiceCategory c =
+    JE.object
+        [ ( "invoice_item_category"
+          , JE.object
+                [ ( "name", JE.string c.name )
+                ]
+          )
+        ]
 
 
 createRequestForMark : String -> Int -> String -> String -> Request String
