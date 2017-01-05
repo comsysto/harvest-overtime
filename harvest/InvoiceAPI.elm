@@ -13,6 +13,10 @@ module Harvest.InvoiceAPI
         , messageDecoder
         , getMessagesForInvoice
         , deleteMessage
+        , markInvoiceAsDraft
+        , markInvoiceAsSent
+        , markInvoiceAsClosed
+        , markInvoiceAsOpen
         )
 
 import Date exposing (Date)
@@ -270,7 +274,56 @@ deleteMessage accountId invoiceId messageId token =
 
 
 
+-- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_sent
+
+
+markInvoiceAsSent : String -> Int -> String -> Request String
+markInvoiceAsSent accountId invoiceId token =
+    createRequestForMark accountId invoiceId token "mark_as_sent"
+
+
+
+-- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_draft
+
+
+markInvoiceAsDraft : String -> Int -> String -> Request String
+markInvoiceAsDraft accountId invoiceId token =
+    createRequestForMark accountId invoiceId token "mark_as_draft"
+
+
+
+-- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_closed
+
+
+markInvoiceAsClosed : String -> Int -> String -> Request String
+markInvoiceAsClosed accountId invoiceId token =
+    createRequestForMark accountId invoiceId token "mark_as_closed"
+
+
+
+-- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/re_open
+
+
+markInvoiceAsOpen : String -> Int -> String -> Request String
+markInvoiceAsOpen accountId invoiceId token =
+    createRequestForMark accountId invoiceId token "re_open"
+
+
+
 {- Helpers -}
+
+
+createRequestForMark : String -> Int -> String -> String -> Request String
+createRequestForMark accountId invoiceId token invoiveType =
+    request
+        { method = "POST"
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString invoiceId) ++ "/messages/" ++ invoiveType ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
 
 
 encodeInvoice : Invoice -> JE.Value
