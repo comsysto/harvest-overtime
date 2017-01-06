@@ -33,6 +33,9 @@ module Harvest.InvoiceAPI
         , createPayment
         )
 
+{-| Warpper around Harvest Invoice API
+-}
+
 import Date exposing (Date)
 import Date.Extra exposing (toFormattedString, toUtcIsoString)
 import Json.Encode as JE
@@ -44,6 +47,8 @@ import Http exposing (..)
 import Dict exposing (Dict)
 
 
+{-| Representation of an invoice.
+-}
 type alias Invoice =
     { id : Int
     , clientId : Int
@@ -79,6 +84,8 @@ type alias Invoice =
     }
 
 
+{-| Representation of a message.
+-}
 type alias Message =
     { id : Int
     , invoiceId : Int
@@ -98,6 +105,20 @@ type alias Message =
     }
 
 
+{-| Representation of a simple message. Used with sendInvoice method
+-}
+type alias SimpleMessage =
+    { invoiceId : Int
+    , body : String
+    , recipients : String
+    , attachPdf : Bool
+    , sendMeAnEmail : Bool
+    , includePayPalLink : Bool
+    }
+
+
+{-| Representation of an invoice category.
+-}
 type alias InvoiceCategory =
     { id : Int
     , name : String
@@ -108,6 +129,8 @@ type alias InvoiceCategory =
     }
 
 
+{-| Representation of a payment.
+-}
 type alias Payment =
     { id : Int
     , invoiceId : Int
@@ -128,11 +151,15 @@ type alias Payment =
 {- Decoders -}
 
 
+{-| Decode a JSON list of invoices into a `List Invoice`.
+-}
 invoicesDecoder : Decoder (List Invoice)
 invoicesDecoder =
     list (field "invoice" invoiceDecoder)
 
 
+{-| Decode a JSON invoice into an `Invoice`.
+-}
 invoiceDecoder : Decoder Invoice
 invoiceDecoder =
     decode Invoice
@@ -169,11 +196,15 @@ invoiceDecoder =
         |> required "updated_at" (nullable date)
 
 
+{-| Decode a JSON list of messages into a `List Message`.
+-}
 messagesDecoder : Decoder (List Message)
 messagesDecoder =
     list (field "message" messageDecoder)
 
 
+{-| Decode a JSON message into a `Message`.
+-}
 messageDecoder : Decoder Message
 messageDecoder =
     decode Message
@@ -194,11 +225,15 @@ messageDecoder =
         |> required "updated_at" (nullable date)
 
 
+{-| Decode a JSON list of invoice categories into a `List InvoiceCategory`.
+-}
 invoiceCategoriesDecoder : Decoder (List InvoiceCategory)
 invoiceCategoriesDecoder =
     list (field "invoice_category" invoiceCategoryDecoder)
 
 
+{-| Decode a JSON invoice category into a `InvoiceCategory`.
+-}
 invoiceCategoryDecoder : Decoder InvoiceCategory
 invoiceCategoryDecoder =
     decode InvoiceCategory
@@ -210,11 +245,15 @@ invoiceCategoryDecoder =
         |> required "updated_at" (nullable date)
 
 
+{-| Decode a JSON list of payments into a `List Payment`.
+-}
 paymentsDecoder : Decoder (List Payment)
 paymentsDecoder =
     list (field "invoice" paymentDecoder)
 
 
+{-| Decode a JSON payment into a `Payment`.
+-}
 paymentDecoder : Decoder Payment
 paymentDecoder =
     decode Payment
@@ -232,10 +271,19 @@ paymentDecoder =
         |> required "updated_at" (nullable date)
 
 
+{-|
+Show Recently Created Invoices
+GET https://YOURACCOUNT.harvestapp.com/invoices
 
--- GET https://YOURACCOUNT.harvestapp.com/invoices
+HTTP Response: 200 OK
 
-
+Allowed parameters:
+page: page=2 (first page starts with 1)
+from/to: from=YYYYMMDD&to=YYYYMMDD
+updated_since: updated_since=2010-09-25+18%3A30
+status: status=partial (possible invoice states are [open, partial, draft, paid, unpaid, pastdue])
+client: client=23445
+-}
 getAllInvoices : String -> String -> Dict String String -> Request (List Invoice)
 getAllInvoices accountId token params =
     request
@@ -249,10 +297,13 @@ getAllInvoices accountId token params =
         }
 
 
+{-|
+Show A Single Invoice
 
--- GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}
+GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}
 
-
+HTTP Response: 200 OK
+-}
 getInvoice : String -> Int -> String -> Request Invoice
 getInvoice accountId invoiceId token =
     request
@@ -266,10 +317,13 @@ getInvoice accountId invoiceId token =
         }
 
 
+{-|
+Delete Existing Invoice
 
--- DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}
+DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}
 
-
+HTTP Response: 200 OK
+-}
 deleteInvoice : String -> Int -> String -> Request String
 deleteInvoice accountId invoiceId token =
     request
@@ -283,10 +337,13 @@ deleteInvoice accountId invoiceId token =
         }
 
 
+{-|
+Update Existing Invoice
 
--- PUT https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}
+PUT https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}
 
-
+HTTP Response: 200 OK, in addition to LOCATION: /invoices/{INVOICEID}
+-}
 updateInvoice : String -> Invoice -> String -> Request String
 updateInvoice accountId invoice token =
     request
@@ -300,10 +357,13 @@ updateInvoice accountId invoice token =
         }
 
 
+{-|
+Create An Invoice
 
--- POST https://YOURACCOUNT.harvestapp.com/invoices
+POST https://YOURACCOUNT.harvestapp.com/invoices
 
-
+HTTP Response: 201 Created
+-}
 createInvoice : String -> String -> Invoice -> Request String
 createInvoice accountId token invoice =
     request
@@ -317,10 +377,11 @@ createInvoice accountId token invoice =
         }
 
 
+{-|
+Show Invoice Messages
 
--- GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages
-
-
+GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages
+-}
 getMessagesForInvoice : String -> String -> Int -> Request (List Message)
 getMessagesForInvoice accountId token invoiceId =
     request
@@ -334,10 +395,49 @@ getMessagesForInvoice accountId token invoiceId =
         }
 
 
+{-|
+Show a particular invoice message:
 
--- DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/{MESSAGEID}
+GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/message/{MESSAGEID}
+-}
+getMessageForInvoice : String -> String -> Int -> Int -> Request Message
+getMessageForInvoice accountId token invoiceId messageId =
+    request
+        { method = "GET"
+        , headers = [ header "Accept" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString invoiceId) ++ "/messages" ++ (toString messageId) ++ "?access_token=" ++ token
+        , body = emptyBody
+        , expect = expectJson messageDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
 
 
+{-|
+Send An Invoice
+
+POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages
+
+HTTP Response: 201 Created
+-}
+sendInvoice : String -> String -> SimpleMessage -> Request String
+sendInvoice accountId token message =
+    request
+        { method = "POST"
+        , headers = [ header "Accept" "application/json", header "Content-Type" "application/json" ]
+        , url = "https://" ++ accountId ++ ".harvestapp.com/invoices/" ++ (toString message.invoiceId) ++ "/messages?access_token=" ++ token
+        , body = jsonBody <| encodeSimpleMessage message
+        , expect = expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+{-|
+Delete Existing Message
+
+DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/{MESSAGEID}
+-}
 deleteMessage : String -> Int -> Int -> String -> Request String
 deleteMessage accountId invoiceId messageId token =
     request
@@ -351,46 +451,51 @@ deleteMessage accountId invoiceId messageId token =
         }
 
 
+{-|
+Mark An Invoice As Sent
 
--- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_sent
-
-
+POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_sent
+-}
 markInvoiceAsSent : String -> Int -> String -> Request String
 markInvoiceAsSent accountId invoiceId token =
     createRequestForMark accountId invoiceId token "mark_as_sent"
 
 
+{-|
+Change A Sent Invoice To Draft
 
--- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_draft
-
-
+POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_draft
+-}
 markInvoiceAsDraft : String -> Int -> String -> Request String
 markInvoiceAsDraft accountId invoiceId token =
     createRequestForMark accountId invoiceId token "mark_as_draft"
 
 
+{-|
+Write An Invoice Off
 
--- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_closed
-
-
+POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/mark_as_closed
+-}
 markInvoiceAsClosed : String -> Int -> String -> Request String
 markInvoiceAsClosed accountId invoiceId token =
     createRequestForMark accountId invoiceId token "mark_as_closed"
 
 
+{-|
+Re-open An Invoice
 
--- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/re_open
-
-
+POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/messages/re_open
+-}
 markInvoiceAsOpen : String -> Int -> String -> Request String
 markInvoiceAsOpen accountId invoiceId token =
     createRequestForMark accountId invoiceId token "re_open"
 
 
+{-|
+Show All Categories
 
--- GET https://YOURACCOUNT.harvestapp.com/invoice_item_categories
-
-
+GET https://YOURACCOUNT.harvestapp.com/invoice_item_categories
+-}
 getInvoiceCategories : String -> String -> Request (List InvoiceCategory)
 getInvoiceCategories accountId token =
     request
@@ -404,10 +509,11 @@ getInvoiceCategories accountId token =
         }
 
 
+{-|
+Create New Category
 
--- POST https://YOURACCOUNT.harvestapp.com/invoice_item_categories
-
-
+POST https://YOURACCOUNT.harvestapp.com/invoice_item_categories
+-}
 createInvoiceCategory : String -> String -> InvoiceCategory -> Request String
 createInvoiceCategory accountId token invoiceCategory =
     request
@@ -421,10 +527,11 @@ createInvoiceCategory accountId token invoiceCategory =
         }
 
 
+{-|
+Update Existing Category
 
--- PUT https://YOURACCOUNT.harvestapp.com/invoice_item_categories/{CATEGORYID}
-
-
+PUT https://YOURACCOUNT.harvestapp.com/invoice_item_categories/{CATEGORYID}
+-}
 updateInvoiceCategory : String -> String -> InvoiceCategory -> Request String
 updateInvoiceCategory accountId token invoiceCategory =
     request
@@ -438,10 +545,11 @@ updateInvoiceCategory accountId token invoiceCategory =
         }
 
 
+{-|
+Delete A Category
 
--- DELETE https://YOURACCOUNT.harvestapp.com/invoice_item_categories/{CATEGORYID}
-
-
+DELETE https://YOURACCOUNT.harvestapp.com/invoice_item_categories/{CATEGORYID}
+-}
 deleteInvoiceCategory : String -> Int -> String -> Request String
 deleteInvoiceCategory accountId invoiceCategoryId token =
     request
@@ -455,10 +563,11 @@ deleteInvoiceCategory accountId invoiceCategoryId token =
         }
 
 
+{-|
+Show Payments For An Invoice
 
--- GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments
-
-
+GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments
+-}
 getPaymentsForInvoice : String -> Int -> String -> Request (List Payment)
 getPaymentsForInvoice accountId invoiceId token =
     request
@@ -472,10 +581,11 @@ getPaymentsForInvoice accountId invoiceId token =
         }
 
 
+{-|
+Return a single, specific payment:
 
--- GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments/{PAYMENTID}
-
-
+GET https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments/{PAYMENTID}
+-}
 getPaymentForInvoice : String -> Int -> Int -> String -> Request Payment
 getPaymentForInvoice accountId invoiceId paymentId token =
     request
@@ -489,10 +599,11 @@ getPaymentForInvoice accountId invoiceId paymentId token =
         }
 
 
+{-|
+Delete Existing Payment
 
--- DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments/{PAYMENTID}
-
-
+DELETE https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments{PAYMENTID}
+-}
 deletePayment : String -> Int -> Int -> String -> Request String
 deletePayment accountId invoiceId paymentId token =
     request
@@ -506,10 +617,13 @@ deletePayment accountId invoiceId paymentId token =
         }
 
 
+{-|
+Create A New Payment
 
--- POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments
+POST https://YOURACCOUNT.harvestapp.com/invoices/{INVOICEID}/payments
 
-
+The fields paid-at and amount are required, and optionally notes can be included.
+-}
 createPayment : String -> String -> Payment -> Request String
 createPayment accountId token payment =
     request
@@ -525,6 +639,21 @@ createPayment accountId token payment =
 
 
 {- Helpers -}
+
+
+encodeSimpleMessage : SimpleMessage -> JE.Value
+encodeSimpleMessage c =
+    JE.object
+        [ ( "message"
+          , JE.object
+                [ ( "body", JE.string c.body )
+                , ( "recipients", JE.string c.recipients )
+                , ( "attach_pdf", JE.bool c.attachPdf )
+                , ( "send_me_an_email", JE.bool c.sendMeAnEmail )
+                , ( "include_pay_pal_link", JE.bool c.includePayPalLink )
+                ]
+          )
+        ]
 
 
 encodePayment : Payment -> JE.Value
