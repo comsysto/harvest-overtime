@@ -3,12 +3,20 @@ module Config exposing (..)
 
 redirectUrl : String
 redirectUrl =
-    "http://localhost:8000/index.html"
+    "http://localhost:8000/Main.elm"
+
+
+
+{- "http://localhost:8000/index.html" -}
 
 
 clientId : String
 clientId =
-    "wvIOerEB7xWVfzrSsge3zw"
+    "y8sWwHgklWizhQHu6x-7fg"
+
+
+
+{- "wvIOerEB7xWVfzrSsge3zw" -}
 
 
 account : String
@@ -24,11 +32,3 @@ capacity =
 overtimeTaskId : Int
 overtimeTaskId =
     2842526
-
-
-
-{- JUST FOR TESTING - TO BE DELETED !
-   token : String
-   token =
-       "o_2U5t4TpyXh6fjclQp1rAEQw07ziCu0Hzyzr5LkUo5SqZR-n3o4FWGwFin2PZNDcaCaCLJ_2KpS6OpUugLVBw"
--}
