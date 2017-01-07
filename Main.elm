@@ -118,7 +118,7 @@ getHoursForEveryCalendarweekInAYear token year userId =
     in
         getEntriesByUserForDateRange
             Config.account
-            (toString userId)
+            userId
             from
             to
             token
