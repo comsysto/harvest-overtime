@@ -6,7 +6,8 @@
   "scripts": {
     "start": "webpack-dev-server --hot --inline --config bundler-config.js",
     "prebuild": "rm -rf build",
-    "build": "NODE_ENV=production webpack --config bundler-config.js"
+    "build": "NODE_ENV=production webpack --config bundler-config.js",
+    "deploy": "./deploy.sh"
   },
   "repository": {
     "type": "git",
