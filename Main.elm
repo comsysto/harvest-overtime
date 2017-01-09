@@ -14,7 +14,6 @@ import Navigation exposing (Location)
 import Task
 import Time
 import Time.DateTime as DateTime
-import Config as Config
 import Dict
 
 
@@ -22,7 +21,22 @@ import Dict
 
 
 type alias Model =
-    { error : Maybe AppError, token : Result String String, hours : List DayEntry, year : Int, selectedYear : Int }
+    { error : Maybe AppError
+    , token : Result String String
+    , hours : List DayEntry
+    , year : Int
+    , flags : Flags
+    , selectedYear : Int
+    }
+
+
+type alias Flags =
+    { redirectUrl : String
+    , clientId : String
+    , account : String
+    , capacity : Float
+    , overtimeTaskId : Int
+    }
 
 
 type AppError
@@ -30,12 +44,13 @@ type AppError
     | HttpError Http.Error
 
 
-init : Location -> ( Model, Cmd Msg )
-init location =
+init : Flags -> Location -> ( Model, Cmd Msg )
+init flags location =
     ( { error = Nothing
-      , token = checkAccessTokenAvailable location.hash authenticationUrl
+      , token = checkAccessTokenAvailable location.hash (authUrl flags.account flags.clientId flags.redirectUrl)
       , hours = []
       , year = 0
+      , flags = flags
       , selectedYear = 0
       }
     , Task.perform CurrentYear getYear
@@ -45,11 +60,6 @@ init location =
 getYear : Task.Task x Int
 getYear =
     Time.now |> Task.andThen (\time -> Task.succeed (DateTime.fromTimestamp time |> DateTime.year))
-
-
-authenticationUrl : String
-authenticationUrl =
-    authUrl Config.account Config.clientId Config.redirectUrl
 
 
 
@@ -71,10 +81,10 @@ update msg model =
             ( model, Cmd.none )
 
         CurrentYear year ->
-            ( { model | year = year, selectedYear = year }, updateHoursWithToken model.token year )
+            ( { model | year = year, selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
 
         LoadHours year ->
-            ( { model | selectedYear = year }, updateHoursWithToken model.token year )
+            ( { model | selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
 
         GetHours hours ->
             ( { model | hours = hours }, Cmd.none )
@@ -83,18 +93,18 @@ update msg model =
             ( { model | error = Just err }, Cmd.none )
 
 
-updateHoursWithToken : Result String String -> Int -> Cmd Msg
-updateHoursWithToken tokenResult year =
+updateHoursWithToken : String -> Result String String -> Int -> Cmd Msg
+updateHoursWithToken account tokenResult year =
     case tokenResult of
         Ok token ->
-            updateHoursForYear token year
+            updateHoursForYear account token year
 
         Err authUrl ->
             Task.perform Failed (Task.succeed (NoToken authUrl))
 
 
-updateHoursForYear : String -> Int -> Cmd Msg
-updateHoursForYear token year =
+updateHoursForYear : String -> String -> Int -> Cmd Msg
+updateHoursForYear account token year =
     Task.attempt
         (\res ->
             case res of
@@ -104,11 +114,11 @@ updateHoursForYear token year =
                 Err err ->
                     Failed err
         )
-        (getUserId token |> Task.andThen (getHoursForEveryCalendarweekInAYear token year))
+        (getUserId account token |> Task.andThen (getHoursForEveryCalendarweekInAYear account token year))
 
 
-getHoursForEveryCalendarweekInAYear : String -> Int -> Int -> Task.Task AppError (List DayEntry)
-getHoursForEveryCalendarweekInAYear token year userId =
+getHoursForEveryCalendarweekInAYear : String -> String -> Int -> Int -> Task.Task AppError (List DayEntry)
+getHoursForEveryCalendarweekInAYear account token year userId =
     let
         from =
             year |> mondayOfTheFirstWeek |> Date.Extra.toFormattedString "yyyyMMdd"
@@ -117,7 +127,7 @@ getHoursForEveryCalendarweekInAYear token year userId =
             year |> sundayOfTheLastWeek |> Date.Extra.toFormattedString "yyyyMMdd"
     in
         getEntriesByUserForDateRange
-            Config.account
+            account
             userId
             from
             to
@@ -127,9 +137,9 @@ getHoursForEveryCalendarweekInAYear token year userId =
             |> Task.mapError HttpError
 
 
-getUserId : String -> Task.Task AppError Int
-getUserId token =
-    Task.mapError HttpError (getUserInfo Config.account token |> Http.toTask)
+getUserId : String -> String -> Task.Task AppError Int
+getUserId account token =
+    Task.mapError HttpError (getUserInfo account token |> Http.toTask)
         |> Task.andThen (\who -> Task.succeed who.user.id)
 
 
@@ -152,10 +162,10 @@ view model =
             Nothing ->
                 let
                     weekEntries =
-                        groupByCalendarWeek model.hours
+                        groupByCalendarWeek model.flags.capacity model.flags.overtimeTaskId model.hours
 
                     overtimeInHours =
-                        overtimeHours weekEntries (overtimeWorked model.hours)
+                        overtimeHours weekEntries (overtimeWorked model.flags.overtimeTaskId model.hours)
                 in
                     [ h1 [ class "f2 lh-title tc" ] [ text "Harvest Overtime Calculator" ]
                     , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
@@ -213,21 +223,16 @@ renderWeek weekEntry =
             ]
 
 
-groupByCalendarWeek : List DayEntry -> List WeekEntry
-groupByCalendarWeek hours =
+groupByCalendarWeek : Float -> Int -> List DayEntry -> List WeekEntry
+groupByCalendarWeek capacity overtimeTaskId hours =
     List.indexedMap
-        (\i ds -> WeekEntry (i + 1) (totalHours ds - Config.capacity) (totalOvertimeCompensation ds))
+        (\i ds -> WeekEntry (i + 1) (totalHours ds - capacity) (overtimeWorked overtimeTaskId ds))
         (List.Extra.groupWhile (\h1 h2 -> Date.Extra.weekNumber h1.spentAt == Date.Extra.weekNumber h2.spentAt) hours)
 
 
-totalOvertimeCompensation : List DayEntry -> Float
-totalOvertimeCompensation hours =
-    (List.filter (\d -> d.taskId == Config.overtimeTaskId) hours) |> totalHours
-
-
-overtimeWorked : List DayEntry -> Float
-overtimeWorked hours =
-    List.filter (\hour -> hour.taskId == Config.overtimeTaskId) hours |> totalHours
+overtimeWorked : Int -> List DayEntry -> Float
+overtimeWorked overtimeTaskId hours =
+    List.filter (\hour -> hour.taskId == overtimeTaskId) hours |> totalHours
 
 
 totalHours : List DayEntry -> Float
@@ -235,9 +240,9 @@ totalHours hours =
     List.map .hours hours |> List.foldl (+) 0
 
 
-main : Program Never Model Msg
+main : Program Flags Model Msg
 main =
-    Navigation.program LocationChange
+    Navigation.programWithFlags LocationChange
         { view = view
         , init = init
         , update = update
