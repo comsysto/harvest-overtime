@@ -3,18 +3,58 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const webpack = require('webpack')
 
-module.exports = {
-  entry: path.join(__dirname, 'index.js'),
+const devConf = {
+  entry: [
+    'webpack-dev-server/client?http://localhost:8000',
+    path.join(__dirname, 'index.js')
+  ],
   output: {
     path: path.join(__dirname, 'build'),
-    filename: '[name]-[hash].js',
-    publicPath: '/harvest-overtime'
+    filename: '[name].js',
+    publicPath: '/'
   },
   resolve: {
-    extensions: ['', '.js', '.elm']
+    extensions: ['', '.js', '.elm'],
+    alias: { 'config': './config.dev.js' }
   },
   module: {
     noParse: [/.elm$/],
+    loaders: [
+      {
+        test: /\.elm$/,
+        exclude: [/elm-stuff/, /node_modules/],
+        loader: 'elm-hot!elm-webpack'
+      },
+      {
+        test: /\.css$/,
+        loader: 'style!css'
+      }
+    ]
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      inject: true
+    })
+  ],
+  devServer: {
+    port: 8000,
+    open: true,
+    contentBase: './build'
+  }
+}
+
+const prodConf = {
+  entry: path.join(__dirname, 'index.js'),
+  output: {
+    path: path.join(__dirname, 'build'),
+    filename: '[name].[hash].js',
+    publicPath: '/harvest-overtime'
+  },
+  resolve: {
+    extensions: ['', '.js', '.elm'],
+    alias: { 'config': './config.prod.js' }
+  },
+  module: {
     loaders: [
       {
         test: /\.elm$/,
@@ -58,6 +98,8 @@ module.exports = {
         screw_ie8: true
       }
     }),
-    new ExtractTextPlugin('[name].[contenthash:8].css')
+    new ExtractTextPlugin('[name].[contenthash:20].css')
   ]
 }
+
+module.exports = process.env.NODE_ENV === 'production' ? prodConf : devConf

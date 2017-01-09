@@ -4,8 +4,9 @@
   "description": "Harvest overtime calculator",
   "main": "Main.elm",
   "scripts": {
+    "start": "webpack-dev-server --hot --inline --config bundler-config.js",
     "prebuild": "rm -rf build",
-    "build": "webpack --config bundler-config.js"
+    "build": "NODE_ENV=production webpack --config bundler-config.js"
   },
   "repository": {
     "type": "git",
@@ -20,11 +21,13 @@
   "devDependencies": {
     "css-loader": "^0.26.1",
     "elm": "^0.18.0",
+    "elm-hot-loader": "^0.5.4",
     "elm-webpack-loader": "^4.1.1",
     "extract-text-webpack-plugin": "^1.0.1",
     "html-webpack-plugin": "^2.26.0",
     "style-loader": "^0.13.1",
-    "webpack": "^1.14.0"
+    "webpack": "^1.14.0",
+    "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
     "tachyons": "^4.6.1"
