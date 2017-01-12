@@ -7,7 +7,7 @@ import Harvest.WhoAmI exposing (getUserInfo)
 import Harvest.ReportingAPI exposing (DayEntry, getEntriesByUserForDateRange)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Http
 import List.Extra
 import Navigation exposing (Location)
@@ -27,6 +27,7 @@ type alias Model =
     , year : Int
     , flags : Flags
     , selectedYear : Int
+    , weeklyWorkingHours : Float
     }
 
 
@@ -34,7 +35,6 @@ type alias Flags =
     { redirectUrl : String
     , clientId : String
     , account : String
-    , capacity : Float
     , overtimeTaskId : Int
     }
 
@@ -52,6 +52,7 @@ init flags location =
       , year = 0
       , flags = flags
       , selectedYear = 0
+      , weeklyWorkingHours = 40
       }
     , Task.perform CurrentYear getYear
     )
@@ -71,6 +72,7 @@ type Msg
     | GetHours (List DayEntry)
     | LoadHours Int
     | CurrentYear Int
+    | UpdateWorkingHours String
     | Failed AppError
 
 
@@ -88,6 +90,18 @@ update msg model =
 
         GetHours hours ->
             ( { model | hours = hours }, Cmd.none )
+
+        UpdateWorkingHours workingHoursString ->
+            let
+                workingHours =
+                    case String.toFloat workingHoursString of
+                        Ok hours ->
+                            hours
+
+                        Err _ ->
+                            40
+            in
+                ( { model | weeklyWorkingHours = workingHours }, Cmd.none )
 
         Failed err ->
             ( { model | error = Just err }, Cmd.none )
@@ -162,12 +176,16 @@ view model =
             Nothing ->
                 let
                     weekEntries =
-                        groupByCalendarWeek model.flags.capacity model.flags.overtimeTaskId model.hours
+                        groupByCalendarWeek model.weeklyWorkingHours model.flags.overtimeTaskId model.hours
 
                     overtimeInHours =
                         overtimeHours weekEntries (overtimeWorked model.flags.overtimeTaskId model.hours)
                 in
                     [ h1 [ class "f2 lh-title tc" ] [ text "Harvest Overtime Calculator" ]
+                    , span [ class "f4 ma2 absolute right-1" ]
+                        [ label [ for "workingHours" ] [ text "Working Hours" ]
+                        , input [ id "workingHours", class "ma1 pa1", type_ "number", placeholder "40", onInput UpdateWorkingHours ] []
+                        ]
                     , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
                     , div [ class "f1 ma2 pa3 bg-light-gray tc shadow-1" ] [ text (toString overtimeInHours ++ "h ") ]
                     ]
