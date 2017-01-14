@@ -182,11 +182,11 @@ view model =
                         overtimeHours weekEntries (overtimeWorked model.flags.overtimeTaskId model.hours)
                 in
                     [ h1 [ class "f2 lh-title tc" ] [ text "Harvest Overtime Calculator" ]
-                    , span [ class "f4 ma2 absolute right-1" ]
+                    , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
+                    , div [ class "f4 ma2 absolute-l right-1" ]
                         [ label [ for "workingHours" ] [ text "Working Hours" ]
                         , input [ id "workingHours", class "ma1 pa1", type_ "number", placeholder "40", onInput UpdateWorkingHours ] []
                         ]
-                    , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
                     , div [ class "f1 ma2 pa3 bg-light-gray tc shadow-1" ] [ text (toString overtimeInHours ++ "h ") ]
                     ]
                         ++ List.map renderWeek weekEntries
@@ -224,7 +224,7 @@ renderWeek weekEntry =
         { number, overtime, compensation } =
             weekEntry
     in
-        div [ class "fl w-10 pa2 shadow-1 ma2 grow tc" ]
+        div [ class "fl w-10-ns pa2 shadow-1 ma2 grow tc" ]
             [ div [ class "f5" ] [ "Week " ++ toString number |> text ]
             , div [ class "f3" ]
                 ([ span [] [ toString overtime ++ "h" |> text ]

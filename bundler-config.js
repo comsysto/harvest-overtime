@@ -33,6 +33,7 @@ const devConf = {
   },
   plugins: [
     new HtmlWebpackPlugin({
+      template: './index.html',
       inject: true
     })
   ],
@@ -69,6 +70,7 @@ const prodConf = {
   },
   plugins: [
     new HtmlWebpackPlugin({
+      template: './index.html',
       inject: true,
       minify: {
         removeComments: true,
