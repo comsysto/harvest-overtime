@@ -4,7 +4,7 @@ This is still WIP!
 
 ## What?
 
-This is an attempt to use Harvest API to calculate the overtime for Comsysto employees. The calculation is based on 40 hrs week, so it won't show correct results for people working halftime (or less than 40 hrs / week). This will be fixed soon.
+This is an attempt to use Harvest API to calculate the overtime for Comsysto employees.
 
 ## Why?
 
