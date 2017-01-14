@@ -171,7 +171,7 @@ view model =
                         [ div [] [ a [ href harvestAuthUrl ] [ text "Login with Harvest" ] ] ]
 
                     HttpError err ->
-                        [ div [] [ text ("Network Error" ++ toString err) ] ]
+                        [ div [] [ text "Network Error" ] ]
 
             Nothing ->
                 let
