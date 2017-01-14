@@ -168,7 +168,7 @@ view model =
             Just appError ->
                 case appError of
                     NoToken harvestAuthUrl ->
-                        [ div [] [ a [ href harvestAuthUrl ] [ text "Login with Harvest" ] ] ]
+                        [ div [] [ header [ class "tc ph4" ] [ title, loginButton harvestAuthUrl ] ] ]
 
                     HttpError err ->
                         [ div [] [ text "Network Error" ] ]
@@ -181,7 +181,7 @@ view model =
                     overtimeInHours =
                         overtimeHours weekEntries (overtimeWorked model.flags.overtimeTaskId model.hours)
                 in
-                    [ h1 [ class "f2 lh-title tc" ] [ text "Harvest Overtime Calculator" ]
+                    [ header [ class "tc ph4" ] [ title ]
                     , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
                     , div [ class "f4 ma2 absolute-l right-1" ]
                         [ label [ for "workingHours" ] [ text "Working Hours" ]
@@ -195,6 +195,16 @@ view model =
 
 type alias WeekEntry =
     { number : Int, overtime : Float, compensation : Float }
+
+
+title : Html msg
+title =
+    h1 [ class "f3 f2-m f1-l fw2 black-90 mv3" ] [ text "Havest Overtime Calculator" ]
+
+
+loginButton : String -> Html msg
+loginButton harvestAuthUrl =
+    a [ href harvestAuthUrl, class "f6 link dim ba ph3 pv2 mb2 dib black" ] [ text "Login with Harvest" ]
 
 
 renderYearButton : Int -> Int -> Html Msg
