@@ -222,11 +222,11 @@ renderYearButton selectedYear year =
     button
         [ onClick (LoadHours year)
         , class
-            ("pa3 ma2 br2 shadow-1 pointer"
+            ("f6 link dim ba ph3 pv2 mb2 ma1 pointer"
                 ++ if year == selectedYear then
                     " bg-light-gray"
                    else
-                    ""
+                    " bg-white"
             )
         , type_ "button"
         ]
