@@ -184,7 +184,7 @@ view model =
                     [ header [ class "tc ph4" ] [ title ]
                     , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
                     , weeklyHoursInput
-                    , div [ class "f1 ma2 pa3 bg-light-gray tc shadow-1" ] [ text (toString overtimeInHours ++ "h ") ]
+                    , monthlyOvertime overtimeInHours
                     ]
                         ++ List.map renderWeek weekEntries
         )
@@ -202,6 +202,11 @@ title =
 loginButton : String -> Html msg
 loginButton harvestAuthUrl =
     a [ href harvestAuthUrl, class "f6 link dim ba ph3 pv2 mb2 dib black" ] [ text "Login with Harvest" ]
+
+
+monthlyOvertime : Float -> Html msg
+monthlyOvertime overtime =
+    div [ class "f3 f2-m f1-l fw2 black-90 pa3 mv3 bg-light-gray tc shadow-1" ] [ text (toString overtime ++ "h ") ]
 
 
 weeklyHoursInput : Html Msg
