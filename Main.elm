@@ -196,7 +196,7 @@ type alias WeekEntry =
 
 title : Html msg
 title =
-    h1 [ class "f3 f2-m f1-l fw2 black-90 mv3" ] [ text "Havest Overtime Calculator" ]
+    h1 [ class "f3 f2-m f1-l fw2 black-90 mv3" ] [ text "Harvest Overtime Calculator" ]
 
 
 loginButton : String -> Html msg
