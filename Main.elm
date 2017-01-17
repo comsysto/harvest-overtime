@@ -15,6 +15,7 @@ import Task
 import Time
 import Time.DateTime as DateTime
 import Dict
+import Chart exposing (lineChart)
 
 
 -- Model
@@ -183,10 +184,11 @@ view model =
                 in
                     [ header [ class "tc ph4" ] [ title ]
                     , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
+                    , div [ class "dn db-l" ] [ lineChart weekEntries ]
                     , weeklyHoursInput
                     , monthlyOvertime overtimeInHours
+                    , div [ class "dn-l" ] (List.map renderWeek weekEntries)
                     ]
-                        ++ List.map renderWeek weekEntries
         )
 
 
