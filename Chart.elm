@@ -19,34 +19,43 @@ lineChart points =
 
         heightScale =
             scale min max 0 chartHeight
+
+        svgYOffset =
+            toString (abs (heightScale min) - 50)
     in
-        svg [ viewBox ("0 " ++ toString (abs (heightScale min) - 50) ++ " 2100 500") ]
+        svg [ viewBox ("0 " ++ svgYOffset ++ " 2100 550") ]
             (List.indexedMap
                 (\i p ->
-                     g [ class "o-90"]
+                    g [ class "o-90" ]
                         [ rect
                             [ x (toString (i * 40))
                             , y (toString (computeY heightScale chartHeight (p.overtime - p.compensation)))
-                            , width "30"
+                            , width "35"
                             , height (toString (abs (heightScale (p.overtime - p.compensation))))
                             , fill "#eee"
                             , stroke "black"
-                            , strokeWidth "0.2"
+                            , strokeWidth "0.3"
                             , class "dim"
                             ]
                             []
                         , text_
-                            [ x (toString ((toFloat i) * 40.0 + 15))
-                            , y (toString ((computeY heightScale chartHeight (p.overtime - p.compensation)) + (abs (heightScale (p.overtime - p.compensation)) / 2)))
+                            [ x (toString ((toFloat i) * 40 + 17.5))
+                            , y (toString ((computeY heightScale chartHeight (p.overtime - p.compensation)) + (abs (heightScale (p.overtime - p.compensation)) / 2) + 5))
                             , textAnchor "middle"
                             ]
                             [ text (toString (p.overtime - p.compensation)) ]
                         , text_
-                            [ x (toString ((toFloat i) * 40.0 + 15))
+                            [ x (toString ((toFloat i) * 40 + 17.5))
                             , y (toString (chartHeight + abs (heightScale min) + 50))
                             , textAnchor "middle"
                             ]
                             [ text (toString i) ]
+                        , text_
+                            [ x "1050"
+                            , y (toString (chartHeight + abs (heightScale min) + 80))
+                            , textAnchor "middle"
+                            ]
+                            [ text "Weeks" ]
                         ]
                 )
                 points
