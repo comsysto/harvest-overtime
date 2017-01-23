@@ -2,9 +2,10 @@ module Main exposing (..)
 
 import Date exposing (Date)
 import Date.Extra
+import Dict
 import Harvest.Auth exposing (..)
-import Harvest.WhoAmI exposing (getUserInfo)
 import Harvest.ReportingAPI exposing (DayEntry, getEntriesByUserForDateRange)
+import Harvest.WhoAmI exposing (getUserInfo)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -14,7 +15,6 @@ import Navigation exposing (Location)
 import Task
 import Time
 import Time.DateTime as DateTime
-import Dict
 import Chart exposing (lineChart)
 
 
@@ -22,14 +22,19 @@ import Chart exposing (lineChart)
 
 
 type alias Model =
-    { error : Maybe AppError
-    , token : Result String String
-    , hours : List DayEntry
-    , year : Int
+    { token : Result String String
+    , page : Page
     , flags : Flags
+    , year : Int
     , selectedYear : Int
     , weeklyWorkingHours : Float
     }
+
+
+type Page
+    = Error AppError
+    | HoursOverview (List DayEntry)
+    | Loading
 
 
 type alias Flags =
@@ -47,13 +52,12 @@ type AppError
 
 init : Flags -> Location -> ( Model, Cmd Msg )
 init flags location =
-    ( { error = Nothing
-      , token = checkAccessTokenAvailable location.hash (authUrl flags.account flags.clientId flags.redirectUrl)
-      , hours = []
-      , year = 0
+    ( { token = checkAccessTokenAvailable location.hash (authUrl flags.account flags.clientId flags.redirectUrl)
+      , page = Loading
       , flags = flags
+      , year = 0
       , selectedYear = 0
-      , weeklyWorkingHours = 40
+      , weeklyWorkingHours = 40.0
       }
     , Task.perform CurrentYear getYear
     )
@@ -87,10 +91,10 @@ update msg model =
             ( { model | year = year, selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
 
         LoadHours year ->
-            ( { model | selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
+            ( { model | page = Loading, selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
 
         GetHours hours ->
-            ( { model | hours = hours }, Cmd.none )
+            ( { model | page = HoursOverview hours }, Cmd.none )
 
         UpdateWorkingHours workingHoursString ->
             let
@@ -105,7 +109,7 @@ update msg model =
                 ( { model | weeklyWorkingHours = workingHours }, Cmd.none )
 
         Failed err ->
-            ( { model | error = Just err }, Cmd.none )
+            ( { model | page = Error err }, Cmd.none )
 
 
 updateHoursWithToken : String -> Result String String -> Int -> Cmd Msg
@@ -165,8 +169,8 @@ getUserId account token =
 view : Model -> Html Msg
 view model =
     div [ class "ma3 sans-serif" ]
-        (case model.error of
-            Just appError ->
+        (case model.page of
+            Error appError ->
                 case appError of
                     NoToken harvestAuthUrl ->
                         [ div [] [ header [ class "tc ph4" ] [ title, loginButton harvestAuthUrl ] ] ]
@@ -174,13 +178,18 @@ view model =
                     HttpError err ->
                         [ div [] [ text "Network Error" ] ]
 
-            Nothing ->
+            Loading ->
+                [ header [ class "tc ph4" ] [ title ]
+                , div [ class "tc" ] [ img [ src "ripple.svg" ] [] ]
+                ]
+
+            HoursOverview hours ->
                 let
                     weekEntries =
-                        groupByCalendarWeek model.weeklyWorkingHours model.flags.overtimeTaskId model.hours
+                        groupByCalendarWeek model.weeklyWorkingHours model.flags.overtimeTaskId hours
 
                     overtimeInHours =
-                        overtimeHours weekEntries (overtimeWorked model.flags.overtimeTaskId model.hours)
+                        overtimeHours weekEntries (overtimeWorked model.flags.overtimeTaskId hours)
                 in
                     [ header [ class "tc ph4" ] [ title ]
                     , div [ class "tc" ] (List.map (renderYearButton model.selectedYear) (List.range (model.year - 3) model.year))
