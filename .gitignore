@@ -6,4 +6,6 @@ repl-temp-*
 elm.js
 elm.min.js
 node_modules/
-build
+build/**/*.js
+build/**/*.css
+build/**/*.html
