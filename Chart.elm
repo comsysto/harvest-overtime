@@ -49,7 +49,7 @@ lineChart points =
                             , y (toString (chartHeight + abs (heightScale min) + 50))
                             , textAnchor "middle"
                             ]
-                            [ text (toString i) ]
+                            [ text (toString (i + 1)) ]
                         , text_
                             [ x "1050"
                             , y (toString (chartHeight + abs (heightScale min) + 80))
