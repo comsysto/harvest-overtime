@@ -6,6 +6,7 @@ import Svg.Attributes exposing (..)
 import List
 
 
+lineChart : List { a | compensation : Float, overtime : Float } -> Html.Html msg
 lineChart points =
     let
         chartHeight =
@@ -67,6 +68,7 @@ scale domainMin domainMax rangeMin rangeMax input =
     input * (rangeMax - rangeMin) / (domainMax - domainMin)
 
 
+computeY : (Float -> Float) -> Float -> Float -> Float
 computeY heightScale chartHeight overtime =
     if (overtime < 0) then
         chartHeight
