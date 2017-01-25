@@ -28,6 +28,7 @@ type alias Model =
     , year : Int
     , selectedYear : Int
     , weeklyWorkingHours : Float
+    , cachedHours : Dict.Dict Int (List DayEntry)
     }
 
 
@@ -58,6 +59,7 @@ init flags location =
       , year = 0
       , selectedYear = 0
       , weeklyWorkingHours = 40.0
+      , cachedHours = Dict.empty
       }
     , Task.perform CurrentYear getYear
     )
@@ -91,10 +93,19 @@ update msg model =
             ( { model | year = year, selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
 
         LoadHours year ->
-            ( { model | page = Loading, selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
+            case Dict.get year model.cachedHours of
+                Just hours ->
+                    ( { model | page = HoursOverview hours, selectedYear = year }, Cmd.none )
+
+                Nothing ->
+                    ( { model | page = Loading, selectedYear = year }, updateHoursWithToken model.flags.account model.token year )
 
         GetHours hours ->
-            ( { model | page = HoursOverview hours }, Cmd.none )
+            let
+                cachedHours =
+                    Dict.insert model.selectedYear hours model.cachedHours
+            in
+                ( { model | page = HoursOverview hours, cachedHours = cachedHours }, Cmd.none )
 
         UpdateWorkingHours workingHoursString ->
             let
