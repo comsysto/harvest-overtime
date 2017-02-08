@@ -235,7 +235,7 @@ weeklyHoursInput : Html Msg
 weeklyHoursInput =
     div [ class "ma4-l black-80 absolute-l right-0" ]
         [ label [ class "f6 b db mb2 tr-l fw2", for "workingHours" ] [ text "Weekly Working Hours" ]
-        , input [ id "workingHours", class "tr-l input-reset ba b--black-20 pa2 mb2 db w-100", type_ "number", placeholder "40", onInput UpdateWorkingHours ] []
+        , input [ id "workingHours", class "tr-l input-reset ba b--black-20 pa2 mb2 db w-100", type_ "number", value "40", onInput UpdateWorkingHours ] []
         ]
 
 
